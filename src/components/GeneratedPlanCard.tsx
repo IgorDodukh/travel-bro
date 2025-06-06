@@ -1,5 +1,6 @@
+
 import Link from 'next/link';
-import type { AiGeneratedPlan, NewTripFormState } from '@/lib/types';
+import type { AiGeneratedPlan } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ListChecks, ArrowRight } from 'lucide-react';
@@ -7,14 +8,11 @@ import { ListChecks, ArrowRight } from 'lucide-react';
 interface GeneratedPlanCardProps {
   plan: AiGeneratedPlan;
   index: number;
-  formInput: NewTripFormState; // To pass along for creating full TravelPlan
+  // formInput prop is removed as GeneratedPlanDetailsPage will get it from sessionStorage
 }
 
-export default function GeneratedPlanCard({ plan, index, formInput }: GeneratedPlanCardProps) {
-  const queryParams = new URLSearchParams();
-  queryParams.append('plan', JSON.stringify(plan));
-  queryParams.append('formInput', JSON.stringify(formInput));
-  
+export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProps) {
+  // Query parameters are removed to prevent long URLs
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader>
@@ -37,7 +35,8 @@ export default function GeneratedPlanCard({ plan, index, formInput }: GeneratedP
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/new-trip/plan-details/${index}?${queryParams.toString()}`}>
+          {/* Navigate without query parameters */}
+          <Link href={`/new-trip/plan-details/${index}`}>
             View & Customize
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>

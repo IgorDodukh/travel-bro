@@ -16,9 +16,11 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateTravelPlansOutput } from '@/lib/types';
+import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
 
 const initialFormState: NewTripFormActionState = { success: false };
+const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
+const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
 export default function NewTripForm() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -27,13 +29,12 @@ export default function NewTripForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
-  // formData for client-side state before submitting to server action
   const [clientFormData, setClientFormData] = useState({
     destination: '',
-    duration: '3', // Stored as string, parsed by server action
+    duration: '3', 
     accommodation: '',
     transport: '',
-    interests: '', // comma-separated string
+    interests: '', 
     attractionType: '',
   });
 
@@ -55,7 +56,6 @@ export default function NewTripForm() {
     event.preventDefault();
     const formData = new FormData();
 
-    // Manually append all data from clientFormData
     formData.append('destination', clientFormData.destination);
     formData.append('duration', clientFormData.duration);
     formData.append('accommodation', clientFormData.accommodation);
@@ -64,33 +64,32 @@ export default function NewTripForm() {
     formData.append('attractionType', clientFormData.attractionType);
     
     startTransition(async () => {
-      // Directly call the server action with the constructed FormData
-      const result = await handleGeneratePlansAction(state, formData); // Pass previous state if needed by action
+      const result = await handleGeneratePlansAction(state, formData); 
       if (result.success && result.data) {
         toast({
           title: "Plans Generated!",
           description: "Redirecting to your new travel plans...",
           variant: "default",
         });
-        const params = new URLSearchParams();
-        params.append('plans', JSON.stringify(result.data));
-        params.append('formInput', JSON.stringify({
+
+        const formInputToStore: NewTripFormState = {
           ...clientFormData,
-          duration: parseInt(clientFormData.duration, 10), // Ensure duration is number for `formInput`
-          interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i), // Ensure interests is array for `formInput`
-        }));
-        router.push(`/new-trip/plans?${params.toString()}`);
+          duration: parseInt(clientFormData.duration, 10),
+          interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
+        };
+        
+        if (typeof window !== 'undefined') {
+            sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(result.data));
+            sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInputToStore));
+        }
+        
+        router.push(`/new-trip/plans`);
       } else {
         toast({
           title: "Error Generating Plans",
           description: result.message || "An unknown error occurred.",
           variant: "destructive",
         });
-        // Update state if server action returns new errors for display
-        // This part depends on how useFormState interacts with manually calling the action
-        // For now, we assume the toast is sufficient for feedback on failure.
-        // If the action sets state.errors or state.message, they would be available here if `formAction(formData)` was used.
-        // Since we're calling `handleGeneratePlansAction` directly, we'd need to manually update a local error state if needed.
       }
     });
   };
@@ -103,7 +102,6 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      {/* The form tag is still useful for structure and accessibility, even if we manually construct FormData */}
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           {currentStep === 1 && (
@@ -181,7 +179,6 @@ export default function NewTripForm() {
             </div>
           )}
           
-          {/* Display general errors from server action that are not field-specific */}
           {state?.message && !state.success && !state.errors && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
@@ -221,7 +218,6 @@ export default function NewTripForm() {
   );
 }
 
-// Add simple fade-in animation for steps
 const style = document.createElement('style');
 style.innerHTML = `
   .animate-fadeIn {
@@ -232,9 +228,7 @@ style.innerHTML = `
     to { opacity: 1; transform: translateY(0); }
   }
 `;
-// Ensure this only runs in the browser
 if (typeof window !== 'undefined') {
   document.head.appendChild(style);
 }
-
     

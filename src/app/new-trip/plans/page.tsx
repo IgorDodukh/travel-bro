@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // useSearchParams removed
 import { useEffect, useState } from 'react';
 import GeneratedPlanCard from '@/components/GeneratedPlanCard';
 import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
@@ -10,8 +10,10 @@ import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
+const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
+const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
+
 export default function GeneratedPlansPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const [generatedPlansOutput, setGeneratedPlansOutput] = useState<GenerateTravelPlansOutput | null>(null);
   const [formInput, setFormInput] = useState<NewTripFormState | null>(null);
@@ -19,24 +21,28 @@ export default function GeneratedPlansPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const plansParam = searchParams.get('plans');
-    const formInputParam = searchParams.get('formInput');
+    if (typeof window !== 'undefined') {
+      const plansParam = sessionStorage.getItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
+      const formInputParam = sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
 
-    if (plansParam && formInputParam) {
-      try {
-        const plansData = JSON.parse(plansParam);
-        const formData = JSON.parse(formInputParam);
-        setGeneratedPlansOutput(plansData);
-        setFormInput(formData);
-      } catch (e) {
-        console.error("Error parsing plans data:", e);
-        setError("Failed to load travel plans. Data might be corrupted.");
+      if (plansParam && formInputParam) {
+        try {
+          const plansData = JSON.parse(plansParam);
+          const formData = JSON.parse(formInputParam);
+          setGeneratedPlansOutput(plansData);
+          setFormInput(formData);
+        } catch (e) {
+          console.error("Error parsing plans data from sessionStorage:", e);
+          setError("Failed to load travel plans. Data might be corrupted.");
+        }
+      } else {
+        setError("No travel plans found in session. Please try generating them again.");
       }
     } else {
-      setError("No travel plans found. Please try generating them again.");
+        setError("Session storage is not available.");
     }
     setIsLoading(false);
-  }, [searchParams]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -100,7 +106,7 @@ export default function GeneratedPlansPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {generatedPlansOutput.travelPlans.map((plan, index) => (
-          <GeneratedPlanCard key={index} plan={plan} index={index} formInput={formInput}/>
+          <GeneratedPlanCard key={index} plan={plan} index={index} />
         ))}
       </div>
 
@@ -113,4 +119,3 @@ export default function GeneratedPlansPage() {
     </div>
   );
 }
-
