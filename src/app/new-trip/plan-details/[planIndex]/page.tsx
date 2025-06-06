@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useParams, useRouter } from 'next/navigation'; // useSearchParams removed
+import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import PlanDetailsView, { createTravelPlanFromAi } from '@/components/PlanDetailsView';
 import type { TravelPlan, AiGeneratedPlan, GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
@@ -15,25 +15,34 @@ const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 export default function GeneratedPlanDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const planIndexFromParams = params.planIndex as string;
   
   const [planToShow, setPlanToShow] = useState<TravelPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const planIndexStr = params.planIndex as string;
-    if (!planIndexStr) {
-      setError("Plan index is missing.");
+    setIsLoading(true);
+    setError(null); 
+
+    if (!planIndexFromParams) {
+      setError("Plan index is missing from URL.");
       setIsLoading(false);
       return;
     }
-    const planIndex = parseInt(planIndexStr, 10);
+    const planIndex = parseInt(planIndexFromParams, 10);
+
+    if (isNaN(planIndex)) {
+        setError("Invalid plan index format in URL.");
+        setIsLoading(false);
+        return;
+    }
 
     if (typeof window !== 'undefined') {
       const plansOutputParam = sessionStorage.getItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
       const formInputParam = sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
 
-      if (isNaN(planIndex) || !plansOutputParam || !formInputParam) {
+      if (!plansOutputParam || !formInputParam) {
         setError("Invalid or missing plan data in session. Please try generating plans again.");
         setIsLoading(false);
         return;
@@ -54,19 +63,19 @@ export default function GeneratedPlanDetailsPage() {
         
         setPlanToShow({ ...fullPlan, id: `temp-${crypto.randomUUID()}` });
 
-        // Clean up sessionStorage after use
+        // Clean up sessionStorage after successful use for this specific plan load
         sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
         sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
 
       } catch (e) {
         console.error("Error processing plan details from sessionStorage:", e);
-        setError("Failed to load plan details. Data might be corrupted.");
+        setError("Failed to load plan details. Data might be corrupted or an unexpected error occurred.");
       }
     } else {
-        setError("Session storage is not available.");
+        setError("Session storage is not available to load plan details.");
     }
     setIsLoading(false);
-  }, [params, router]); // depends on params.planIndex
+  }, [planIndexFromParams]); // Depend only on planIndexFromParams
 
   if (isLoading) {
     return (
@@ -103,9 +112,9 @@ export default function GeneratedPlanDetailsPage() {
             <CardTitle className="text-primary">Plan Not Found</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-6">The selected plan could not be loaded.</p>
-            <Button onClick={() => router.push('/new-trip/plans')}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Plans
+            <p className="text-muted-foreground mb-6">The selected plan could not be loaded. This can happen if you refreshed the page or navigated here directly without generating plans first.</p>
+            <Button onClick={() => router.push('/new-trip')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Start New Trip
             </Button>
           </CardContent>
         </Card>
