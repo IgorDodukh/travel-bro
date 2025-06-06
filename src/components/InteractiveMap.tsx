@@ -7,6 +7,7 @@ import L, { type Map as LeafletMapInstance } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from 'react';
 
+// Fix for default icon paths in Leaflet
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -31,7 +32,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
         setMapZoom(13); 
       } else if (pointsOfInterest.length > 0 && pointsOfInterest[0]?.location) { 
         setMapCenter([pointsOfInterest[0].location.lat, pointsOfInterest[0].location.lng]);
-        setMapZoom(pointsOfInterest[0].location.lat === 0 && pointsOfInterest[0].location.lng === 0 ? 2 : 13); 
+        setMapZoom(pointsOfInterest[0].location.lat === 0 && pointsOfInterest[0].location.lng === 0 ? 2 : 13);
       } else {
         setMapCenter([20,0]);
         setMapZoom(2);
@@ -51,14 +52,13 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
     };
   }, []);
 
-
   if (typeof window === 'undefined') {
     return <p>Loading map...</p>; 
   }
   
   return (
     <MapContainer
-      whenCreated={(mapInstance) => { mapRef.current = mapInstance; }}
+      whenCreated={instance => { mapRef.current = instance; }}
       center={mapCenter}
       zoom={mapZoom}
       scrollWheelZoom={true}
