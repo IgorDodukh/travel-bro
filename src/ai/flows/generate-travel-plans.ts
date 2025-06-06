@@ -25,13 +25,13 @@ export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSc
 const AiPointOfInterestSchema = z.object({
   name: z.string().describe('The name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Should be concise.'),
   description: z.string().optional().describe('A brief description of the point of interest or activity (e.g., "Iconic landmark with panoramic city views.", "World-renowned art museum."). Keep it to one sentence if possible.'),
-  latitude: z.number().describe('The geographic latitude of the point of interest. Example: 48.8584 for Eiffel Tower.'),
-  longitude: z.number().describe('The geographic longitude of the point of interest. Example: 2.2945 for Eiffel Tower.'),
+  latitude: z.number().describe('The precise geographic latitude of the point of interest. Example: 48.8584 for Eiffel Tower. Accuracy is crucial for mapping.'),
+  longitude: z.number().describe('The precise geographic longitude of the point of interest. Example: 2.2945 for Eiffel Tower. Accuracy is crucial for mapping.'),
 });
 
 const TravelPlanSchema = z.object({
   planName: z.string().describe('Name of the travel plan (e.g., "Parisian Adventure", "Roman Holiday").'),
-  pointsOfInterest: z.array(AiPointOfInterestSchema).describe('A list of individual points of interest for the entire trip. Each POI should be a distinct place or activity with a name, an optional short description, and its latitude and longitude coordinates.'),
+  pointsOfInterest: z.array(AiPointOfInterestSchema).describe('A list of individual points of interest for the entire trip. Each POI should be a distinct place or activity with a name, an optional short description, and its precise latitude and longitude coordinates.'),
 });
 
 const GenerateTravelPlansOutputSchema = z.object({
@@ -47,7 +47,7 @@ const prompt = ai.definePrompt({
   name: 'generateTravelPlansPrompt',
   input: {schema: GenerateTravelPlansInputSchema},
   output: {schema: GenerateTravelPlansOutputSchema},
-  prompt: `You are a travel planning expert. Generate three alternative travel plans based on the following user preferences:
+  prompt: `You are an expert travel planning assistant. Generate three alternative travel plans based on the following user preferences:
 
 Destination: {{{destination}}}
 Duration: {{{duration}}} days
@@ -57,7 +57,13 @@ Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Attraction Type: {{{attractionType}}}
 
 For each travel plan, provide a 'planName'.
-Also, for each travel plan, provide a list of 'pointsOfInterest'. Each item in this list should be an object with a 'name' (e.g., "Eiffel Tower"), an optional brief 'description' (e.g., "Iconic landmark with panoramic views"), and its 'latitude' and 'longitude' as numerical geographic coordinates. Ensure these coordinates are accurate for mapping purposes. These points of interest will be for the entire trip and will be distributed across the travel days later.
+Also, for each travel plan, provide a list of 'pointsOfInterest'. Each item in this list MUST be an object with:
+1.  'name': The specific name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Make it concise.
+2.  'description' (optional): A brief, one-sentence description (e.g., "Iconic landmark with panoramic city views.").
+3.  'latitude': The ACCURATE geographic latitude as a number (e.g., 48.8584 for the Eiffel Tower).
+4.  'longitude': The ACCURATE geographic longitude as a number (e.g., 2.2945 for the Eiffel Tower).
+
+It is CRUCIAL for the mapping functionality that the latitude and longitude coordinates are precise and correct for each listed point of interest. Please ensure you are providing real, verifiable coordinates. Do not use placeholder or approximate values. These points of interest will be for the entire trip and will be distributed across the travel days later.
 Ensure each point of interest is a distinct, actionable item.
 
 Return the travel plans in the requested JSON format.
@@ -75,3 +81,4 @@ const generateTravelPlansFlow = ai.defineFlow(
     return output!;
   }
 );
+
