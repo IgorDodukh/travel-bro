@@ -4,7 +4,6 @@
 import { useState, useEffect, useRef }  from 'react';
 import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiGeneratedPlan, AiGeneratedPointOfInterest } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-// Tabs components are removed
 import DailyItineraryView from './DailyItineraryView';
 import AddPoiDialog from './AddPoiDialog';
 import SavePlanDialog from './SavePlanDialog';
@@ -62,7 +61,10 @@ export function createTravelPlanFromAi(
         id: crypto.randomUUID(),
         name: aiPoi.name,
         description: aiPoi.description || `Details for ${aiPoi.name}`,
-        location: { lat: 0, lng: 0 },
+        location: { 
+          lat: aiPoi.latitude !== undefined ? aiPoi.latitude : 0,
+          lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
+        },
         type: 'generated' as 'generated',
       };
       if (dailyItineraries[dayIndex]) {
@@ -338,5 +340,3 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     </div>
   );
 }
-    
-    

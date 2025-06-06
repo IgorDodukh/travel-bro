@@ -3,12 +3,14 @@
 export interface AiGeneratedPointOfInterest {
   name: string;
   description?: string;
+  latitude: number;
+  longitude: number;
 }
 
 // Corresponds to the AI flow output structure for a single generated plan
 export interface AiGeneratedPlan {
   planName: string;
-  pointsOfInterest: AiGeneratedPointOfInterest[]; // Changed from string[]
+  pointsOfInterest: AiGeneratedPointOfInterest[];
 }
 
 // Corresponds to the AI flow output structure
@@ -59,4 +61,3 @@ export interface NewTripFormState {
   interests: string[];
   attractionType: string;
 }
-
