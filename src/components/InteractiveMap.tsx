@@ -3,12 +3,11 @@
 
 import type { PointOfInterest } from '@/lib/types';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import L, { type Map as LeafletMapInstance } from 'leaflet'; // Import Map type
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; // Add useRef
 
-// Fix for default Leaflet icon paths in Next.js/Webpack environments
-// Using unpkg CDN for icon images
+// Fix for default Leaflet icon paths
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -20,35 +19,51 @@ interface InteractiveMapProps {
 }
 
 export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps) {
-  const [mapCenter, setMapCenter] = useState<[number, number]>([20, 0]); // Default center (world view)
-  const [mapZoom, setMapZoom] = useState<number>(2); // Default zoom
+  const [mapCenter, setMapCenter] = useState<[number, number]>([20, 0]);
+  const [mapZoom, setMapZoom] = useState<number>(2);
+  const mapRef = useRef<LeafletMapInstance | null>(null); // Ref to store map instance
 
   useEffect(() => {
     if (pointsOfInterest.length > 0) {
-      // Attempt to find a non-placeholder POI for centering
       const firstValidPoi = pointsOfInterest.find(poi => poi.location && (poi.location.lat !== 0 || poi.location.lng !== 0));
       
       if (firstValidPoi && firstValidPoi.location) {
         setMapCenter([firstValidPoi.location.lat, firstValidPoi.location.lng]);
-        setMapZoom(13); // Zoom in if we have a valid POI
+        setMapZoom(13); 
       } else if (pointsOfInterest[0].location) {
-        // Fallback to the first POI's location even if it's 0,0
         setMapCenter([pointsOfInterest[0].location.lat, pointsOfInterest[0].location.lng]);
-        setMapZoom(pointsOfInterest[0].location.lat === 0 && pointsOfInterest[0].location.lng === 0 ? 2 : 13); // Lower zoom for 0,0
+        setMapZoom(pointsOfInterest[0].location.lat === 0 && pointsOfInterest[0].location.lng === 0 ? 2 : 13); 
       }
     } else {
-      // Default if no POIs
       setMapCenter([20,0]);
       setMapZoom(2);
     }
   }, [pointsOfInterest]);
 
+  // Effect for cleaning up the map instance on component unmount
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove(); // Explicitly remove the map
+        mapRef.current = null; // Clear the ref
+      }
+    };
+  }, []); // Empty dependency array ensures this runs once on mount to set up cleanup for unmount
+
+
   if (typeof window === 'undefined') {
-    return <p>Loading map...</p>; // Or some other placeholder for SSR
+    return <p>Loading map...</p>; 
   }
   
   return (
-    <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={true} style={{ height: '500px', width: '100%' }} className="rounded-lg shadow-md">
+    <MapContainer
+      center={mapCenter}
+      zoom={mapZoom}
+      scrollWheelZoom={true}
+      style={{ height: '500px', width: '100%' }}
+      className="rounded-lg shadow-md"
+      whenCreated={(mapInstance) => { mapRef.current = mapInstance; }} // Assign map instance to ref
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -67,4 +82,3 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
     </MapContainer>
   );
 }
-
