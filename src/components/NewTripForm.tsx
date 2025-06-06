@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useTransition } from 'react';
@@ -29,7 +30,7 @@ export default function NewTripForm() {
   // formData for client-side state before submitting to server action
   const [clientFormData, setClientFormData] = useState({
     destination: '',
-    duration: '3',
+    duration: '3', // Stored as string, parsed by server action
     accommodation: '',
     transport: '',
     interests: '', // comma-separated string
@@ -52,21 +53,32 @@ export default function NewTripForm() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData();
+
+    // Manually append all data from clientFormData
+    formData.append('destination', clientFormData.destination);
+    formData.append('duration', clientFormData.duration);
+    formData.append('accommodation', clientFormData.accommodation);
+    formData.append('transport', clientFormData.transport);
+    formData.append('interests', clientFormData.interests);
+    formData.append('attractionType', clientFormData.attractionType);
     
     startTransition(async () => {
-      const result = await handleGeneratePlansAction(null, formData);
+      // Directly call the server action with the constructed FormData
+      const result = await handleGeneratePlansAction(state, formData); // Pass previous state if needed by action
       if (result.success && result.data) {
         toast({
           title: "Plans Generated!",
           description: "Redirecting to your new travel plans...",
           variant: "default",
         });
-        // Pass generated plans data to the next page via query params
         const params = new URLSearchParams();
         params.append('plans', JSON.stringify(result.data));
-        // Also pass original form input for context
-        params.append('formInput', JSON.stringify(clientFormData));
+        params.append('formInput', JSON.stringify({
+          ...clientFormData,
+          duration: parseInt(clientFormData.duration, 10), // Ensure duration is number for `formInput`
+          interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i), // Ensure interests is array for `formInput`
+        }));
         router.push(`/new-trip/plans?${params.toString()}`);
       } else {
         toast({
@@ -74,6 +86,11 @@ export default function NewTripForm() {
           description: result.message || "An unknown error occurred.",
           variant: "destructive",
         });
+        // Update state if server action returns new errors for display
+        // This part depends on how useFormState interacts with manually calling the action
+        // For now, we assume the toast is sufficient for feedback on failure.
+        // If the action sets state.errors or state.message, they would be available here if `formAction(formData)` was used.
+        // Since we're calling `handleGeneratePlansAction` directly, we'd need to manually update a local error state if needed.
       }
     });
   };
@@ -86,6 +103,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
+      {/* The form tag is still useful for structure and accessibility, even if we manually construct FormData */}
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           {currentStep === 1 && (
@@ -163,7 +181,8 @@ export default function NewTripForm() {
             </div>
           )}
           
-          {state?.message && !state.success && (
+          {/* Display general errors from server action that are not field-specific */}
+          {state?.message && !state.success && !state.errors && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
@@ -213,4 +232,9 @@ style.innerHTML = `
     to { opacity: 1; transform: translateY(0); }
   }
 `;
-document.head.appendChild(style);
+// Ensure this only runs in the browser
+if (typeof window !== 'undefined') {
+  document.head.appendChild(style);
+}
+
+    
