@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -21,9 +22,14 @@ const GenerateTravelPlansInputSchema = z.object({
 });
 export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSchema>;
 
+const AiPointOfInterestSchema = z.object({
+  name: z.string().describe('The name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Should be concise.'),
+  description: z.string().optional().describe('A brief description of the point of interest or activity (e.g., "Iconic landmark with panoramic city views.", "World-renowned art museum."). Keep it to one sentence if possible.'),
+});
+
 const TravelPlanSchema = z.object({
-  planName: z.string().describe('Name of the travel plan'),
-  pointsOfInterest: z.array(z.string()).describe('A list of points of interest for the travel plan.'),
+  planName: z.string().describe('Name of the travel plan (e.g., "Parisian Adventure", "Roman Holiday").'),
+  pointsOfInterest: z.array(AiPointOfInterestSchema).describe('A list of individual points of interest for the entire trip. Each POI should be a distinct place or activity with a name and an optional short description.'),
 });
 
 const GenerateTravelPlansOutputSchema = z.object({
@@ -48,7 +54,9 @@ Transportation: {{{transport}}}
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Attraction Type: {{{attractionType}}}
 
-Each travel plan should include a list of points of interest and be tailored to the user's preferences.
+For each travel plan, provide a 'planName'.
+Also, for each travel plan, provide a list of 'pointsOfInterest'. Each item in this list should be an object with a 'name' (e.g., "Eiffel Tower") and an optional brief 'description' (e.g., "Iconic landmark with panoramic views"). These points of interest will be for the entire trip and will be distributed across the travel days later.
+Ensure each point of interest is a distinct, actionable item.
 
 Return the travel plans in the requested JSON format.
 `,
@@ -65,3 +73,4 @@ const generateTravelPlansFlow = ai.defineFlow(
     return output!;
   }
 );
+

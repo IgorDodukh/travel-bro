@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect }  from 'react';
-import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiGeneratedPlan } from '@/lib/types';
+import { useState, useEffect, useRef }  from 'react';
+import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiGeneratedPlan, AiGeneratedPointOfInterest } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DailyItineraryView from './DailyItineraryView';
@@ -39,27 +39,26 @@ export function createTravelPlanFromAi(
 ): Omit<TravelPlan, 'id'> {
   const dailyItineraries: DailyItinerary[] = [];
   const numDays = formInput.duration;
-  const poisPerDay = Math.ceil(aiPlan.pointsOfInterest.length / numDays);
+  const totalPois = aiPlan.pointsOfInterest.length;
 
+  // Initialize daily itineraries for all days
   for (let i = 0; i < numDays; i++) {
-    const dayPois: PointOfInterest[] = aiPlan.pointsOfInterest
-      .slice(i * poisPerDay, (i + 1) * poisPerDay)
-      .map((poiName) => ({
+    dailyItineraries.push({ day: i + 1, pointsOfInterest: [] });
+  }
+  
+  if (totalPois > 0) {
+    // Distribute POIs among the days
+    aiPlan.pointsOfInterest.forEach((aiPoi: AiGeneratedPointOfInterest, index: number) => {
+      const dayIndex = index % numDays; // Simple distribution, can be improved
+      const newPoi: PointOfInterest = {
         id: crypto.randomUUID(),
-        name: poiName,
-        description: `Explore ${poiName}`, // Generic description
+        name: aiPoi.name,
+        description: aiPoi.description || `Explore ${aiPoi.name}`, // Use AI description or generic
         location: { lat: 0, lng: 0 }, // Placeholder location
         type: 'generated' as 'generated',
-      }));
-    dailyItineraries.push({ day: i + 1, pointsOfInterest: dayPois });
-  }
-   // If there are no POIs from AI, create empty daily itineraries
-   if (aiPlan.pointsOfInterest.length === 0 && numDays > 0) {
-    for (let i = 0; i < numDays; i++) {
-      if (!dailyItineraries.find(d => d.day === i + 1)) {
-         dailyItineraries.push({ day: i + 1, pointsOfInterest: [] });
-      }
-    }
+      };
+      dailyItineraries[dayIndex].pointsOfInterest.push(newPoi);
+    });
   }
 
 
@@ -86,6 +85,10 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
   const [isSavePlanDialogOpen, setIsSavePlanDialogOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+
+  // Ref to track if data for the current planIndex has been processed and sessionStorage cleared
+   const processedPlanIndexRef = useRef<string | null>(null);
+
 
   useEffect(() => {
     setPlan(initialPlan);
