@@ -4,15 +4,14 @@
 import { useState, useEffect, useRef }  from 'react';
 import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiGeneratedPlan, AiGeneratedPointOfInterest } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Tabs components are removed
 import DailyItineraryView from './DailyItineraryView';
-// import MapViewPlaceholder from './MapViewPlaceholder'; // Will be removed
 import AddPoiDialog from './AddPoiDialog';
 import SavePlanDialog from './SavePlanDialog';
 import { saveTravelPlan as savePlanToStorage } from '@/lib/localStorageUtils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, Edit, Save, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { ChevronLeft, Edit, Save, Trash2, PlusCircle, Loader2, List, Map as MapIcon } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -28,7 +27,7 @@ import {
 import dynamic from 'next/dynamic';
 
 // Dynamically import InteractiveMap to ensure it's client-side only
-const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), { 
+const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), {
   ssr: false,
   loading: () => (
     <div className="flex justify-center items-center h-[500px] bg-muted rounded-lg">
@@ -41,33 +40,29 @@ const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), {
 
 interface PlanDetailsViewProps {
   initialPlan: TravelPlan;
-  mode: 'new' | 'existing' | 'editing-existing'; // 'new' for unsaved AI plan, 'existing' for saved, 'editing-existing' for editing a saved plan
-  onDeletePlan?: (planId: string) => void; // For existing plans
+  mode: 'new' | 'existing' | 'editing-existing';
+  onDeletePlan?: (planId: string) => void;
 }
 
-// Helper to create a full TravelPlan from AI output and form input
 export function createTravelPlanFromAi(
   aiPlan: AiGeneratedPlan,
   formInput: NewTripFormState
 ): Omit<TravelPlan, 'id'> {
   const dailyItineraries: DailyItinerary[] = [];
   const numDays = formInput.duration;
-  
-  // Initialize daily itineraries for all days
+
   for (let i = 0; i < numDays; i++) {
     dailyItineraries.push({ day: i + 1, pointsOfInterest: [] });
   }
-  
-  // Distribute POIs among the days
-  // Ensure aiPlan.pointsOfInterest is an array before trying to use forEach
+
   if (Array.isArray(aiPlan.pointsOfInterest) && aiPlan.pointsOfInterest.length > 0) {
     aiPlan.pointsOfInterest.forEach((aiPoi: AiGeneratedPointOfInterest, index: number) => {
-      const dayIndex = index % numDays; // Simple distribution
+      const dayIndex = index % numDays;
       const newPoi: PointOfInterest = {
         id: crypto.randomUUID(),
         name: aiPoi.name,
         description: aiPoi.description || `Details for ${aiPoi.name}`,
-        location: { lat: 0, lng: 0 }, // Default placeholder location
+        location: { lat: 0, lng: 0 },
         type: 'generated' as 'generated',
       };
       if (dailyItineraries[dayIndex]) {
@@ -97,11 +92,11 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
   const [editingPoi, setEditingPoi] = useState<PointOfInterest | null>(null);
   const [targetDayForNewPoi, setTargetDayForNewPoi] = useState<number | null>(null);
   const [isSavePlanDialogOpen, setIsSavePlanDialogOpen] = useState(false);
+  const [viewType, setViewType] = useState<'list' | 'map'>('list'); // State for view type
   const router = useRouter();
   const { toast } = useToast();
 
-  // Ref to track if data for the current planIndex has been processed and sessionStorage cleared
-   const processedPlanIndexRef = useRef<string | null>(null);
+  const processedPlanIndexRef = useRef<string | null>(null);
 
 
   useEffect(() => {
@@ -120,10 +115,10 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
 
   const handleOpenAddPoiDialog = (dayNumber: number) => {
     setTargetDayForNewPoi(dayNumber);
-    setEditingPoi(null); // Ensure it's for adding new, not editing
+    setEditingPoi(null);
     setIsAddPoiDialogOpen(true);
   };
-  
+
   const handleOpenEditPoiDialog = (poiToEdit: PointOfInterest, dayNumber: number) => {
     setTargetDayForNewPoi(dayNumber);
     setEditingPoi(poiToEdit);
@@ -137,17 +132,17 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
       const newDailyItineraries = prevPlan.dailyItineraries.map(dayItinerary => {
         if (dayItinerary.day === targetDayForNewPoi) {
           let updatedPois: PointOfInterest[];
-          if (editingPoi) { // Editing existing POI
-            updatedPois = dayItinerary.pointsOfInterest.map(p => 
+          if (editingPoi) {
+            updatedPois = dayItinerary.pointsOfInterest.map(p =>
               p.id === editingPoi.id ? { ...p, ...poiData, location: poiData.location || p.location || { lat: 0, lng: 0} } : p
             );
-          } else { // Adding new POI
+          } else {
             const newPoi: PointOfInterest = {
               name: poiData.name,
               description: poiData.description,
               id: crypto.randomUUID(),
               type: 'custom',
-              location: poiData.location || { lat: 0, lng: 0 }, 
+              location: poiData.location || { lat: 0, lng: 0 },
             };
             updatedPois = [...dayItinerary.pointsOfInterest, newPoi];
           }
@@ -160,20 +155,20 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     setEditingPoi(null);
     setTargetDayForNewPoi(null);
   };
-  
+
   const handleSavePlan = (planNameFromDialog: string) => {
     const planToSave: TravelPlan = {
       ...plan,
-      id: plan.id || crypto.randomUUID(), // Assign new ID if it's a new plan
+      id: plan.id || crypto.randomUUID(),
       name: planNameFromDialog,
     };
-    
+
     savePlanToStorage(planToSave);
     toast({
       title: "Plan Saved!",
       description: `"${planToSave.name}" has been successfully saved.`,
     });
-    router.push(`/plan/${planToSave.id}`); // Navigate to the saved plan's view
+    router.push(`/plan/${planToSave.id}`);
   };
 
   const handleSaveChanges = () => {
@@ -182,15 +177,13 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
         title: "Changes Saved!",
         description: `Your updates to "${plan.name}" have been saved.`,
      });
-     setCurrentMode('existing'); // Switch back to view mode
-     // Optionally, could re-fetch or router.refresh() if data source was external
+     setCurrentMode('existing');
   };
 
   const toggleEditMode = () => {
     if (currentMode === 'existing') {
       setCurrentMode('editing-existing');
     } else if (currentMode === 'editing-existing') {
-      // Potentially ask to save changes if dirty
       setCurrentMode('existing');
     }
   };
@@ -255,7 +248,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           )}
         </div>
       </div>
-      
+
       {(currentMode === 'new' || currentMode === 'editing-existing') && (
         <Alert>
           <Edit className="h-4 w-4" />
@@ -269,13 +262,29 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
         </Alert>
       )}
 
+      {/* View type toggle buttons */}
+      <div className="flex justify-center gap-2 my-6">
+        <Button
+          variant={viewType === 'list' ? 'default' : 'outline'}
+          onClick={() => setViewType('list')}
+          aria-pressed={viewType === 'list'}
+        >
+          <List className="w-4 h-4 mr-2" />
+          Itinerary List
+        </Button>
+        <Button
+          variant={viewType === 'map' ? 'default' : 'outline'}
+          onClick={() => setViewType('map')}
+          aria-pressed={viewType === 'map'}
+        >
+          <MapIcon className="w-4 h-4 mr-2" />
+          Map View
+        </Button>
+      </div>
 
-      <Tabs defaultValue="list" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-1/2 mx-auto">
-          <TabsTrigger value="list">Itinerary List</TabsTrigger>
-          <TabsTrigger value="map">Map View</TabsTrigger>
-        </TabsList>
-        <TabsContent value="list" className="mt-6">
+      {/* Conditional rendering based on viewType */}
+      {viewType === 'list' && (
+        <div className="mt-6">
           {plan.dailyItineraries.map((dayItin) => (
             <DailyItineraryView
               key={dayItin.day}
@@ -287,8 +296,8 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
             />
           ))}
           {(currentMode === 'new' || currentMode === 'editing-existing') && plan.dailyItineraries.length < plan.duration && (
-             <Button 
-                variant="outline" 
+             <Button
+                variant="outline"
                 className="w-full mt-4"
                 onClick={() => {
                     const nextDayNumber = plan.dailyItineraries.length > 0 ? Math.max(...plan.dailyItineraries.map(d => d.day)) + 1 : 1;
@@ -305,11 +314,14 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
                 <PlusCircle className="w-4 h-4 mr-2" /> Add Day {plan.dailyItineraries.length + 1} (up to {plan.duration})
              </Button>
           )}
-        </TabsContent>
-        <TabsContent value="map" className="mt-6">
+        </div>
+      )}
+
+      {viewType === 'map' && (
+        <div className="mt-6">
           <InteractiveMap pointsOfInterest={allPois} />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
       <AddPoiDialog
         isOpen={isAddPoiDialogOpen}
@@ -326,3 +338,5 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     </div>
   );
 }
+    
+    
