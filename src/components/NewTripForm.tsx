@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState, useTransition } from 'react';
-import { useFormState } from 'react-dom';
+import { useState, useTransition, useActionState } from 'react';
 import { useRouter } from 'next/navigation';
 import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
 
@@ -38,7 +37,7 @@ export default function NewTripForm() {
     attractionType: '',
   });
 
-  const [state, formAction] = useFormState(handleGeneratePlansAction, initialFormState);
+  const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -64,7 +63,11 @@ export default function NewTripForm() {
     formData.append('attractionType', clientFormData.attractionType);
     
     startTransition(async () => {
+      // Directly call formAction with the formData.
+      // The useActionState hook manages the result internally and updates `state`.
+      // We need to await the result of the action to react to its outcome here.
       const result = await handleGeneratePlansAction(state, formData); 
+      
       if (result.success && result.data) {
         toast({
           title: "Plans Generated!",
@@ -73,9 +76,12 @@ export default function NewTripForm() {
         });
 
         const formInputToStore: NewTripFormState = {
-          ...clientFormData,
+          destination: clientFormData.destination,
           duration: parseInt(clientFormData.duration, 10),
+          accommodation: clientFormData.accommodation,
+          transport: clientFormData.transport,
           interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
+          attractionType: clientFormData.attractionType,
         };
         
         if (typeof window !== 'undefined') {
