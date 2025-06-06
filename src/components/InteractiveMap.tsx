@@ -47,11 +47,8 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
     return <p>Loading map...</p>; // Or some other placeholder for SSR
   }
   
-  // Ensure map key changes if center changes to force re-render, useful for when POIs load
-  const mapKey = `${mapCenter.join(',')}-${mapZoom}`;
-
   return (
-    <MapContainer key={mapKey} center={mapCenter} zoom={mapZoom} scrollWheelZoom={true} style={{ height: '500px', width: '100%' }} className="rounded-lg shadow-md">
+    <MapContainer center={mapCenter} zoom={mapZoom} scrollWheelZoom={true} style={{ height: '500px', width: '100%' }} className="rounded-lg shadow-md">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -70,3 +67,4 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
     </MapContainer>
   );
 }
+
