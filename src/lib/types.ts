@@ -1,0 +1,54 @@
+// Corresponds to the AI flow output structure for a single generated plan
+export interface AiGeneratedPlan {
+  planName: string;
+  pointsOfInterest: string[];
+}
+
+// Corresponds to the AI flow output structure
+export interface GenerateTravelPlansOutput {
+  travelPlans: AiGeneratedPlan[];
+}
+
+export interface PointOfInterest {
+  id: string;
+  name: string;
+  description?: string;
+  location?: { lat: number; lng: number }; // For map view
+  type: 'generated' | 'custom';
+}
+
+export interface DailyItinerary {
+  day: number;
+  pointsOfInterest: PointOfInterest[];
+}
+
+export interface TravelPlan {
+  id: string; 
+  name: string; 
+  destination: string;
+  duration: number; // days
+  accommodation: string;
+  transport: string;
+  interests: string[];
+  attractionType: string; // 'local' | 'touristic'
+  dailyItineraries: DailyItinerary[];
+  // Store original form data for editing purposes
+  originalFormInput?: {
+    destination: string;
+    duration: number;
+    accommodation: string;
+    transport: string;
+    interests: string[];
+    attractionType: string;
+  };
+}
+
+// For the multi-step form
+export interface NewTripFormState {
+  destination: string;
+  duration: number;
+  accommodation: string;
+  transport: string;
+  interests: string[];
+  attractionType: string;
+}
