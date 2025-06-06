@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -7,6 +8,7 @@ import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 
 export default function GeneratedPlansPage() {
   const searchParams = useSearchParams();
@@ -111,3 +113,4 @@ export default function GeneratedPlansPage() {
     </div>
   );
 }
+
