@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect }  from 'react';
@@ -19,6 +20,7 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
@@ -306,3 +308,4 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     </div>
   );
 }
+
