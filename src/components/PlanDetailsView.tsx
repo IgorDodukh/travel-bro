@@ -6,13 +6,13 @@ import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiG
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DailyItineraryView from './DailyItineraryView';
-import MapViewPlaceholder from './MapViewPlaceholder';
+// import MapViewPlaceholder from './MapViewPlaceholder'; // Will be removed
 import AddPoiDialog from './AddPoiDialog';
 import SavePlanDialog from './SavePlanDialog';
 import { saveTravelPlan as savePlanToStorage } from '@/lib/localStorageUtils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, Edit, Save, Trash2, PlusCircle } from 'lucide-react';
+import { ChevronLeft, Edit, Save, Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -25,6 +25,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import dynamic from 'next/dynamic';
+
+// Dynamically import InteractiveMap to ensure it's client-side only
+const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center h-[500px] bg-muted rounded-lg">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="ml-2 text-muted-foreground">Loading map...</p>
+    </div>
+  )
+});
+
 
 interface PlanDetailsViewProps {
   initialPlan: TravelPlan;
@@ -39,28 +52,29 @@ export function createTravelPlanFromAi(
 ): Omit<TravelPlan, 'id'> {
   const dailyItineraries: DailyItinerary[] = [];
   const numDays = formInput.duration;
-  const totalPois = aiPlan.pointsOfInterest.length;
-
+  
   // Initialize daily itineraries for all days
   for (let i = 0; i < numDays; i++) {
     dailyItineraries.push({ day: i + 1, pointsOfInterest: [] });
   }
   
-  if (totalPois > 0) {
-    // Distribute POIs among the days
+  // Distribute POIs among the days
+  // Ensure aiPlan.pointsOfInterest is an array before trying to use forEach
+  if (Array.isArray(aiPlan.pointsOfInterest) && aiPlan.pointsOfInterest.length > 0) {
     aiPlan.pointsOfInterest.forEach((aiPoi: AiGeneratedPointOfInterest, index: number) => {
-      const dayIndex = index % numDays; // Simple distribution, can be improved
+      const dayIndex = index % numDays; // Simple distribution
       const newPoi: PointOfInterest = {
         id: crypto.randomUUID(),
         name: aiPoi.name,
-        description: aiPoi.description || `Explore ${aiPoi.name}`, // Use AI description or generic
-        location: { lat: 0, lng: 0 }, // Placeholder location
+        description: aiPoi.description || `Details for ${aiPoi.name}`,
+        location: { lat: 0, lng: 0 }, // Default placeholder location
         type: 'generated' as 'generated',
       };
-      dailyItineraries[dayIndex].pointsOfInterest.push(newPoi);
+      if (dailyItineraries[dayIndex]) {
+        dailyItineraries[dayIndex].pointsOfInterest.push(newPoi);
+      }
     });
   }
-
 
   return {
     name: aiPlan.planName || `Trip to ${formInput.destination}`,
@@ -116,7 +130,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     setIsAddPoiDialogOpen(true);
   };
 
-  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type'>) => {
+  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type' | 'location'> & { location?: { lat: number, lng: number} }) => {
     if (targetDayForNewPoi === null) return;
 
     setPlan(prevPlan => {
@@ -125,14 +139,15 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           let updatedPois: PointOfInterest[];
           if (editingPoi) { // Editing existing POI
             updatedPois = dayItinerary.pointsOfInterest.map(p => 
-              p.id === editingPoi.id ? { ...p, ...poiData } : p
+              p.id === editingPoi.id ? { ...p, ...poiData, location: poiData.location || p.location || { lat: 0, lng: 0} } : p
             );
           } else { // Adding new POI
             const newPoi: PointOfInterest = {
-              ...poiData,
+              name: poiData.name,
+              description: poiData.description,
               id: crypto.randomUUID(),
               type: 'custom',
-              location: { lat: 0, lng: 0 }, // Placeholder
+              location: poiData.location || { lat: 0, lng: 0 }, 
             };
             updatedPois = [...dayItinerary.pointsOfInterest, newPoi];
           }
@@ -292,7 +307,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           )}
         </TabsContent>
         <TabsContent value="map" className="mt-6">
-          <MapViewPlaceholder pointsOfInterest={allPois} />
+          <InteractiveMap pointsOfInterest={allPois} />
         </TabsContent>
       </Tabs>
 
@@ -311,4 +326,3 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     </div>
   );
 }
-
