@@ -23,10 +23,10 @@ const GenerateTravelPlansInputSchema = z.object({
 export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSchema>;
 
 const AiPointOfInterestSchema = z.object({
-  name: z.string().describe('The name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Should be concise.'),
+  name: z.string().describe('The specific, official name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Should be concise and precise.'),
   description: z.string().optional().describe('A brief description of the point of interest or activity (e.g., "Iconic landmark with panoramic city views.", "World-renowned art museum."). Keep it to one sentence if possible.'),
-  latitude: z.number().describe('The precise geographic latitude of the point of interest. Example: 48.8584 for Eiffel Tower. Accuracy is crucial for mapping.'),
-  longitude: z.number().describe('The precise geographic longitude of the point of interest. Example: 2.2945 for Eiffel Tower. Accuracy is crucial for mapping.'),
+  latitude: z.number().describe('The HIGHLY ACCURATE geographic latitude of the point of interest. Example: 48.85837 for Eiffel Tower. Precision is absolutely critical for mapping.'),
+  longitude: z.number().describe('The HIGHLY ACCURATE geographic longitude of the point of interest. Example: 2.294481 for Eiffel Tower. Precision is absolutely critical for mapping.'),
 });
 
 const TravelPlanSchema = z.object({
@@ -58,12 +58,19 @@ Attraction Type: {{{attractionType}}}
 
 For each travel plan, provide a 'planName'.
 Also, for each travel plan, provide a list of 'pointsOfInterest'. Each item in this list MUST be an object with:
-1.  'name': The specific name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Make it concise.
+1.  'name': The specific, official name of the point of interest (e.g., "Eiffel Tower", "Louvre Museum"). Be precise.
 2.  'description' (optional): A brief, one-sentence description (e.g., "Iconic landmark with panoramic city views.").
-3.  'latitude': The ACCURATE geographic latitude as a number (e.g., 48.8584 for the Eiffel Tower).
-4.  'longitude': The ACCURATE geographic longitude as a number (e.g., 2.2945 for the Eiffel Tower).
+3.  'latitude': The HIGHLY ACCURATE geographic latitude as a number (e.g., 48.85837 for the Eiffel Tower).
+4.  'longitude': The HIGHLY ACCURATE geographic longitude as a number (e.g., 2.294481 for the Eiffel Tower).
 
-It is CRUCIAL for the mapping functionality that the latitude and longitude coordinates are precise and correct for each listed point of interest. Please ensure you are providing real, verifiable coordinates. Do not use placeholder or approximate values. These points of interest will be for the entire trip and will be distributed across the travel days later.
+**IMPORTANT FOR COORDINATE ACCURACY:**
+The correct functioning of the application's map view depends ENTIRELY on the precision of these latitude and longitude coordinates.
+- Treat this step as if you are querying a precise geographical database or map service for each named location to get its coordinates.
+- DO NOT approximate, invent, or guess coordinates. Provide only verifiable, real-world coordinates.
+- If a POI is very obscure and you cannot confidently provide highly accurate coordinates, it is better to select a slightly different, more verifiable POI that fits the user's interests.
+- Double-check the coordinates you provide. For example, the Eiffel Tower in Paris, France is at approximately latitude 48.85837 and longitude 2.294481.
+
+These points of interest are for the entire trip and will be distributed across the travel days later.
 Ensure each point of interest is a distinct, actionable item.
 
 Return the travel plans in the requested JSON format.
