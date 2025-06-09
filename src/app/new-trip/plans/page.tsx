@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation'; // useSearchParams removed
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import GeneratedPlanCard from '@/components/GeneratedPlanCard';
 import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
@@ -43,6 +43,14 @@ export default function GeneratedPlansPage() {
     }
     setIsLoading(false);
   }, []);
+
+  const handleBackToPreferences = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
+    }
+    router.push('/new-trip');
+  };
 
   if (isLoading) {
     return (
@@ -111,7 +119,7 @@ export default function GeneratedPlansPage() {
       </div>
 
       <div className="text-center mt-12">
-        <Button variant="outline" onClick={() => router.push('/new-trip')}>
+        <Button variant="outline" onClick={handleBackToPreferences}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Preferences
         </Button>

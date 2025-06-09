@@ -28,9 +28,6 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
 
   useEffect(() => {
     if (pointsOfInterest.length > 0) {
-      console.log(`POOOOOOOI: ${pointsOfInterest[0].name}`)
-      console.log(`POOOOOOOI: ${pointsOfInterest[0].location?.lat}`)
-      console.log(`POOOOOOOI: ${pointsOfInterest[0].location?.lng}`)
       const firstValidPoi = pointsOfInterest.find(
         (poi) => poi.location && (poi.location.lat !== 0 || poi.location.lng !== 0)
       );

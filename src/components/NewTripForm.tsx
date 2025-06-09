@@ -69,7 +69,6 @@ export default function NewTripForm() {
       const result = await handleGeneratePlansAction(state, formData); 
       
       if (result.success && result.data) {
-        console.log(`Generated Plans data: >>> ${JSON.stringify(result.data)}`)
         toast({
           title: "Plans Generated!",
           description: "Redirecting to your new travel plans...",

@@ -21,7 +21,7 @@ export default function GeneratedPlanDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Ref to track if data for the current planIndex has been processed and sessionStorage cleared
+  // Ref to track if data for the current planIndex has been processed
   const processedPlanIndexRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -41,9 +41,9 @@ export default function GeneratedPlanDetailsPage() {
       return;
     }
 
-    // If we have already successfully processed this planIndex,
+    // If we have already successfully processed this planIndex for the current session data,
     // the data should be in planToShow, and we don't need to do anything further.
-    if (processedPlanIndexRef.current === planIndexFromParams) {
+    if (processedPlanIndexRef.current === planIndexFromParams && planToShow) {
       setIsLoading(false); // Ensure loading is false
       return;
     }
@@ -52,7 +52,7 @@ export default function GeneratedPlanDetailsPage() {
     // that previously failed before setting processedPlanIndexRef.
     setIsLoading(true);
     setError(null);
-    setPlanToShow(null); // Clear stale data for the new load
+    // setPlanToShow(null); // Do not clear stale data if it's for the same index and session data is still valid
 
     if (typeof window !== 'undefined') {
       const plansOutputParam = sessionStorage.getItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
@@ -71,8 +71,8 @@ export default function GeneratedPlanDetailsPage() {
 
         if (planIndex < 0 || !allGeneratedPlans.travelPlans || planIndex >= allGeneratedPlans.travelPlans.length) {
           setError("Selected plan not found or index is out of bounds.");
-          // Do not set processedPlanIndexRef
-          return; // Exit before finally block sets isLoading to false
+          setIsLoading(false); // Stop loading on error
+          return; 
         }
         
         const selectedAiPlan: AiGeneratedPlan = allGeneratedPlans.travelPlans[planIndex];
@@ -80,15 +80,13 @@ export default function GeneratedPlanDetailsPage() {
         
         setPlanToShow({ ...fullPlan, id: `temp-${crypto.randomUUID()}` });
         
-        // Mark as processed and clear session items ONLY on successful load and state update.
+        // Mark as processed for this planIndex.
+        // Session items are NOT cleared here anymore.
         processedPlanIndexRef.current = planIndexFromParams;
-        sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
-        sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
 
       } catch (e) {
         console.error("Error processing plan details from sessionStorage:", e);
         setError("Failed to load plan details. Data might be corrupted or an unexpected error occurred.");
-        // Do NOT set processedPlanIndexRef.current here, so it can be retried.
       } finally {
         setIsLoading(false); // Ensure loading is stopped in all paths of try-catch
       }
@@ -96,7 +94,7 @@ export default function GeneratedPlanDetailsPage() {
         setError("Session storage is not available to load plan details.");
         setIsLoading(false);
     }
-  }, [planIndexFromParams]); // Effect depends only on planIndexFromParams
+  }, [planIndexFromParams, planToShow]); // Added planToShow to deps to re-evaluate if it's cleared externally
 
   if (isLoading) {
     return (
@@ -126,8 +124,6 @@ export default function GeneratedPlanDetailsPage() {
   }
 
   if (!planToShow) {
-     // This state can be reached if there was an error handled above, or if loading just finished and plan wasn't set.
-     // The error condition should catch most issues. If planToShow is null and no error, it's an unexpected state.
      return (
       <div className="text-center py-10">
         <Card className="max-w-md mx-auto shadow-lg">
@@ -149,4 +145,3 @@ export default function GeneratedPlanDetailsPage() {
     <PlanDetailsView initialPlan={planToShow} mode="new" />
   );
 }
-
