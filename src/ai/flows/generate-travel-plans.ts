@@ -78,7 +78,7 @@ async function simpleGeocode(locationName: string, city: string, country: string
 
 // Schema for POIs without coordinates (for Strategy 1)
 const PointOfInterestNameOnlySchema = z.object({
-  name: z.string().describe("EXACT official name of the location (as found on Google Maps). This is crucial for later geocoding."),
+  name: z.string().describe("EXACT official name of the location (as found on Google Maps or OpenStreetMap). This is crucial for later geocoding."),
   description: z.string().optional().describe("Brief description of the location."),
 });
 
@@ -108,7 +108,7 @@ Instructions for each of the 3 travel plans:
     *   For example, if duration is 3 days, provide 9 to 15 location names in total for THIS plan. If duration is 1 day, provide 3 to 5.
 2.  **POI Details**:
     *   For each point of interest, provide:
-        *   'name': The EXACT official name of the location, as it would appear on Google Maps. This is critical.
+        *   'name': The EXACT official name of the location, as it would appear on reliable mapping services (e.g., Google Maps, OpenStreetMap). This is critical for accurate geocoding later. Do not invent locations.
         *   'description': A brief, engaging description.
 3.  **Transport Consideration**:
     *   When selecting these POI names, consider that they will be geocoded and distributed across the {{{duration}}} days by the application.
@@ -117,12 +117,13 @@ Instructions for each of the 3 travel plans:
         *   If 'Car', POI names can represent locations that are more spread out.
         *   If 'Public Transport', ensure chosen POI names represent locations accessible via such means.
 4.  **Focus**:
-    *   Concentrate on well-known, easily findable locations relevant to the user's interests and attraction type. Use precise, official names.
+    *   Concentrate on well-known, easily findable locations relevant to the user's interests and attraction type. Use precise, official names that are easily geocodable.
 
-Example of good POI names:
+Example of good POI names for geocoding:
 - "Jerónimos Monastery" (not "Monastery in Belém")
 - "Pastéis de Belém" (not "famous pastry shop")
 - "Miradouro da Senhora do Monte" (not "viewpoint")
+- "Eiffel Tower" (not "Paris tower")
 
 Return JSON. Do NOT include coordinates in this step.`,
 });
@@ -165,11 +166,15 @@ CRITICAL REQUIREMENTS for each plan:
         *   If 'Car', POIs for a conceptual day can be more spread out.
         *   If 'Public Transport', ensure POIs for a conceptual day are accessible via such means.
     *   For each POI in this list, provide:
-        *   'name': Official name as on Google Maps.
+        *   'name': The EXACT official name of the location, as it appears on reliable mapping services (e.g., Google Maps, OpenStreetMap).
         *   'description': Brief, engaging description.
-        *   'latitude': PRECISE geographic latitude (e.g., 38.6919, NOT 38.69). Strive for factual accuracy.
-        *   'longitude': PRECISE geographic longitude (e.g., -9.2158, NOT -9.22). Strive for factual accuracy.
-3.  **Coordinate Accuracy**: Only include locations where you are confident of the exact coordinates (at least 4 decimal places). Verify each coordinate mentally. Focus on attractions, museums, landmarks with verified GPS data.
+        *   'latitude': PRECISE geographic latitude. THIS IS CRITICAL FOR MAPPING FUNCTIONALITY. Must be a number with at least 4 decimal places (e.g., for Lisbon's Praça do Comércio: 38.7075, or for Paris' Eiffel Tower: 48.8584).
+        *   'longitude': PRECISE geographic longitude. THIS IS CRITICAL FOR MAPPING FUNCTIONALITY. Must be a number with at least 4 decimal places (e.g., for Lisbon's Praça do Comércio: -9.1364, or for Paris' Eiffel Tower: 2.2945).
+3.  **Coordinate Accuracy and Verification**:
+    *   The accuracy of GPS coordinates is PARAMOUNT for this application. Incorrect coordinates make the map feature useless.
+    *   For EACH point of interest, you MUST mentally verify the coordinates against known, reliable sources before outputting. Treat this as a data lookup task.
+    *   If you cannot confidently provide coordinates accurate to at least 4-5 decimal places for a POI, PLEASE OMIT THAT POI or CHOOSE AN ALTERNATIVE POI for which you can provide highly accurate data.
+    *   Prioritize well-known landmarks, museums, and attractions with easily verifiable, precise GPS coordinates. AVOID GUESSING or providing generalized coordinates for larger areas or less specific locations.
 
 Return JSON.`,
 });
