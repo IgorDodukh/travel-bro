@@ -25,6 +25,8 @@ export default function GeneratedPlanDetailsPage() {
   const processedPlanIndexRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const loadPlanDetails = async () => {
+
     // Initial error checks for planIndexFromParams
     if (!planIndexFromParams) {
       setError("Plan index is missing from URL.");
@@ -76,14 +78,8 @@ export default function GeneratedPlanDetailsPage() {
         }
         
         const selectedAiPlan: AiGeneratedPlan = allGeneratedPlans.travelPlans[planIndex];
-        const fullPlan = createTravelPlanFromAi(selectedAiPlan, originalFormInput);
+        const fullPlan = await createTravelPlanFromAi(selectedAiPlan, originalFormInput);
         
-        // Assign dayIndex to points of interest from daily itineraries
-        fullPlan.dailyItineraries.forEach((dayItinerary) => {
-          for (const poi of dayItinerary.pointsOfInterest) {
-            poi.dayIndex = dayItinerary.day;
-          }
-        });
         setPlanToShow({ ...fullPlan, id: `temp-${crypto.randomUUID()}` });
 
         // Mark as processed for this planIndex.
@@ -100,6 +96,8 @@ export default function GeneratedPlanDetailsPage() {
         setError("Session storage is not available to load plan details.");
         setIsLoading(false);
     }
+    };
+    loadPlanDetails(); // Call the async function
   }, [planIndexFromParams, planToShow]); // Added planToShow to deps to re-evaluate if it's cleared externally
 
   if (isLoading) {

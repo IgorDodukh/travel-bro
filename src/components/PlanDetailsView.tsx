@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
+import { optimizeItinerary } from '@/lib/itineraryOptimization';
 
 // Dynamically import InteractiveMap to ensure it's client-side only
 const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), {
@@ -42,22 +43,16 @@ interface PlanDetailsViewProps {
   mode: 'new' | 'existing' | 'editing-existing';
   onDeletePlan?: (planId: string) => void;
 }
-
-export function createTravelPlanFromAi(
+// Modified createTravelPlanFromAi to be async and await optimizeItinerary
+export async function createTravelPlanFromAi(
   aiPlan: AiGeneratedPlan,
   formInput: NewTripFormState
-): Omit<TravelPlan, 'id'> {
-  const dailyItineraries: DailyItinerary[] = [];
+): Promise<Omit<TravelPlan, 'id'>> {
   const numDays = formInput.duration;
-
-  for (let i = 0; i < numDays; i++) {
-    dailyItineraries.push({ day: i + 1, pointsOfInterest: [] });
-  }
-
-  if (Array.isArray(aiPlan.pointsOfInterest) && aiPlan.pointsOfInterest.length > 0) {
-    aiPlan.pointsOfInterest.forEach((aiPoi: AiGeneratedPointOfInterest, index: number) => {
-      const dayIndex = index % numDays;
-      const newPoi: PointOfInterest = {
+  
+  // Flatten all points of interest from the AI plan for optimization
+  const allAiPois: PointOfInterest[] = Array.isArray(aiPlan.pointsOfInterest)
+    ? aiPlan.pointsOfInterest.map((aiPoi: AiGeneratedPointOfInterest) => ({
         id: crypto.randomUUID(),
         name: aiPoi.name,
         description: aiPoi.description || `Details for ${aiPoi.name}`,
@@ -66,14 +61,15 @@ export function createTravelPlanFromAi(
           lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
         },
         type: 'generated' as 'generated',
-        dayIndex: 0
-      };
-      if (dailyItineraries[dayIndex]) {
-        dailyItineraries[dayIndex].pointsOfInterest.push(newPoi);
-      }
-    });
-  }
+        dayIndex: 0, // Temporary day index before optimization
+      }))
+    : [];
 
+  // Optimize the itinerary (this function will assign dayIndex to each POI)
+  const optimizedPois = await optimizeItinerary(allAiPois, numDays);
+
+  // Use the daily itineraries directly from the optimization result
+  const dailyItineraries: DailyItinerary[] = optimizedPois;
   return {
     name: aiPlan.planName || `Trip to ${formInput.destination}`,
     destination: formInput.destination,
@@ -192,7 +188,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     }
   };
 
-  const allPois = plan.dailyItineraries.flatMap(d => d.pointsOfInterest);
+  const allPois = Array.isArray(plan.dailyItineraries) ? plan.dailyItineraries.flatMap(d => d.pointsOfInterest) : []; // Ensure dailyItineraries is an array
 
   return (
     <div className="space-y-6">
@@ -288,7 +284,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
 
       {/* Conditional rendering based on viewType */}
       {viewType === 'list' && (
-        <div className="mt-6">
+        <div className="mt-6"> {/* Ensure dailyItineraries is an array before mapping */}
           {plan.dailyItineraries.map((dayItin) => (
             <DailyItineraryView
               key={dayItin.day}
