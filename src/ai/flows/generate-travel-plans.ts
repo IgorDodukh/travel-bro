@@ -92,7 +92,7 @@ Attraction Type: {{{attractionType}}}
 
 For each plan, provide:
 1. planName: A descriptive name
-2. pointsOfInterest: Array of 5-7 locations with:
+2. pointsOfInterest: Array of 3-5 locations per day for each visited day from {{{duration}}} days with:
    - name: EXACT official name (as found on Google Maps)
    - description: Brief description
 

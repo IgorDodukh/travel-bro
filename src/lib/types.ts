@@ -19,6 +19,7 @@ export interface GenerateTravelPlansOutput {
 }
 
 export interface PointOfInterest {
+  dayIndex: number;
   id: string;
   name: string;
   description?: string;

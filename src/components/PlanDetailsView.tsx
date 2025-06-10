@@ -61,11 +61,12 @@ export function createTravelPlanFromAi(
         id: crypto.randomUUID(),
         name: aiPoi.name,
         description: aiPoi.description || `Details for ${aiPoi.name}`,
-        location: { 
+        location: {
           lat: aiPoi.latitude !== undefined ? aiPoi.latitude : 0,
           lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
         },
         type: 'generated' as 'generated',
+        dayIndex: 0
       };
       if (dailyItineraries[dayIndex]) {
         dailyItineraries[dayIndex].pointsOfInterest.push(newPoi);
@@ -145,6 +146,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
               id: crypto.randomUUID(),
               type: 'custom',
               location: poiData.location || { lat: 0, lng: 0 },
+              dayIndex: poiData.dayIndex
             };
             updatedPois = [...dayItinerary.pointsOfInterest, newPoi];
           }
@@ -272,7 +274,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           aria-pressed={viewType === 'list'}
         >
           <List className="w-4 h-4 mr-2" />
-          Itinerary List
+          Route View
         </Button>
         <Button
           variant={viewType === 'map' ? 'default' : 'outline'}

@@ -78,8 +78,14 @@ export default function GeneratedPlanDetailsPage() {
         const selectedAiPlan: AiGeneratedPlan = allGeneratedPlans.travelPlans[planIndex];
         const fullPlan = createTravelPlanFromAi(selectedAiPlan, originalFormInput);
         
+        // Assign dayIndex to points of interest from daily itineraries
+        fullPlan.dailyItineraries.forEach((dayItinerary) => {
+          for (const poi of dayItinerary.pointsOfInterest) {
+            poi.dayIndex = dayItinerary.day;
+          }
+        });
         setPlanToShow({ ...fullPlan, id: `temp-${crypto.randomUUID()}` });
-        
+
         // Mark as processed for this planIndex.
         // Session items are NOT cleared here anymore.
         processedPlanIndexRef.current = planIndexFromParams;
