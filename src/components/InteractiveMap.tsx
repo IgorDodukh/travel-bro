@@ -187,7 +187,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
           if (!poi.location) return null;
 
           const isActive = poi.dayIndex === selectedDayIndex;
-          const pinColor = isActive ? '#84cc16' : '#a1a1aa'; // Light green for active, grey for inactive
+          const pinColor = isActive ? '#84cc16' : '#5a5a5a'; // Light green for active, grey for inactive
           const pinOpacity = isActive ? 1 : 0.6;
 
           return (
