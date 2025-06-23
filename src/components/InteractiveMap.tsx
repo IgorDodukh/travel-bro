@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { PointOfInterest } from '@/lib/types';
