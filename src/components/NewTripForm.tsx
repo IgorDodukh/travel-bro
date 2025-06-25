@@ -42,8 +42,6 @@ export default function NewTripForm() {
   const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
 
   useEffect(() => {
-    // This effect runs when the server action completes.
-    // We check for a message to ensure it doesn't run on initial render.
     if (!state.message) {
       return;
     }
@@ -62,6 +60,7 @@ export default function NewTripForm() {
         transport: clientFormData.transport,
         interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
         attractionType: clientFormData.attractionType,
+        includeSurroundings: clientFormData.includeSurroundings,
       };
 
       if (typeof window !== 'undefined') {
@@ -71,8 +70,6 @@ export default function NewTripForm() {
 
       router.push(`/new-trip/plans`);
     } else if (!state.success && !state.errors) {
-      // Only show a toast for general errors, not for validation errors
-      // which are displayed inline next to the fields.
       toast({
         title: "Error Generating Plans",
         description: state.message || "An unknown error occurred.",

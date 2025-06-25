@@ -1,3 +1,4 @@
+
 'use server';
 
 import { generateTravelPlans, type GenerateTravelPlansInput, type GenerateTravelPlansOutput } from '@/ai/flows/generate-travel-plans';
