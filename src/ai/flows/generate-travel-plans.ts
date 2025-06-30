@@ -14,6 +14,7 @@ const GenerateTravelPlansInputSchema = z.object({
   transport: z.string().describe('The preferred mode of transportation.'),
   interests: z.array(z.string()).describe('A list of interests for the travel plan.'),
   attractionType: z.string().describe('The type of attractions to suggest.'),
+  includeSurroundings: z.boolean().optional().describe('Whether to include attractions in the surrounding area (up to 200km).'),
 });
 
 const AiPointOfInterestSchema = z.object({
@@ -21,6 +22,10 @@ const AiPointOfInterestSchema = z.object({
   description: z.string().optional().describe('A brief description of the point of interest.'),
   latitude: z.number().describe('The precise geographic latitude of the point of interest.'),
   longitude: z.number().describe('The precise geographic longitude of the point of interest.'),
+  address: z.string().describe('The exact address of the point of interest.'),
+  time: z.number().describe('The approximate time to spend at the point of interest (minutes).'),
+  day: z.number().describe('The day of the trip when the point of interest is recommended to be visited.'),
+  cost: z.string().describe('The estimated cost of the point of interest.'),
 });
 
 const TravelPlanSchema = z.object({
@@ -36,39 +41,88 @@ export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSc
 export type GenerateTravelPlansOutput = z.infer<typeof GenerateTravelPlansOutputSchema>;
 
 // Simplified geocoding function
-async function simpleGeocode(locationName: string, city: string, country: string): Promise<{lat: number, lon: number} | null> {
-  const query = encodeURIComponent(`${locationName}, ${city}, ${country}`);
-  const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+async function simpleGeocode(
+  locationName: string,
+  city: string,
+  country: string
+): Promise<{ lat: number; lon: number } | null> {
+  locationName = normalizePlaceName(locationName);
+  const formats = [
+    `${locationName}, ${city}, ${country}`,
+    `${locationName}, ${country}`,
+    `${locationName}, ${city}`,
+    `${city}, ${locationName}, ${country}`,
+    `${locationName}`,
+  ];
+
+  for (const format of formats) {
+    const query = encodeURIComponent(format);
+    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
+
+    console.log(`🔍 Trying geocode ${locationName}: ${url}`);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // respect rate limits
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'TravelPlannerApp/1.0',
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`⚠️ Geocoding HTTP error: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+
+      if (data && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon),
+        };
+      }
+    } catch (error) {
+      console.error(`❌ Geocoding error for ${format}:`, error);
+    }
+  }
+
+  console.warn(`⛔ Failed to geocode after all attempts: ${locationName}`);
+  return null;
+}
+
+async function geocodeWithGoogle(
+  locationName: string,
+  address: string
+): Promise<{ lat: number; lon: number } | null> {
+  const GOOGLE_API_KEY = process.env.GOOGLE_GEOCODING_API_KEY!;
+  const query = encodeURIComponent(address);
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${GOOGLE_API_KEY}`;
+
+  console.debug(`📍 Trying geocode for [${locationName}]: ${url}`);
 
   try {
-    // Add delay to respect rate limits
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'TravelPlannerApp/1.0',
-      },
-    });
-
-    if (!response.ok) {
-      console.error(`Geocoding HTTP error: ${response.status}`);
-      return null;
-    }
-
+    const response = await fetch(url);
     const data = await response.json();
-    
-    if (data && data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        lon: parseFloat(data[0].lon),
-      };
+
+    if (data.status === "OK" && data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location;
+      return { lat, lon: lng };
+    } else {
+      console.warn(`⚠️ Google Geocoding API: ${data.status}`);
     }
-    
-    return null;
   } catch (error) {
-    console.error(`Geocoding error for ${locationName}:`, error);
-    return null;
+    console.error(`❌ Google geocoding error for ${address}:`, error);
   }
+  return null;
+}
+
+function normalizePlaceName(name: string) {
+  return name
+    .trim()
+    .replace(/[^\w\s]/gi, '') // remove special chars
+    .replace(/\s{2,}/g, ' ')   // collapse extra spaces
+    .toLowerCase();
 }
 
 // Two-step approach: Generate POIs first, then get coordinates
@@ -80,21 +134,35 @@ const generatePOIsPrompt = ai.definePrompt({
       planName: z.string(),
       pointsOfInterest: z.array(z.object({
         name: z.string(),
-        description: z.string().optional(),
+        address: z.string(),
+        description: z.string(),
+        time: z.number(),
+        day: z.number(),
+        cost: z.string(),
       }))
     }))
   })},
-  prompt: `Generate 3 travel plans for {{{destination}}} with the following preferences:
+  prompt: `As an experienced travel guide, generate 3 travel plans for {{{destination}}} with the following preferences:
 
 Duration: {{{duration}}} days
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Attraction Type: {{{attractionType}}}
 
+CRITICAL RULES:
+{{#if includeSurroundings}}
+- Include noteworthy attractions in the surrounding areas, up to 200km away.
+{{/if}}
+- All locations MUST be grouped by days based on their position to each other. Group close locations into one day but don't forget to split all journey into {{{duration}}} days.
+
 For each plan, provide:
 1. planName: A descriptive name
-2. pointsOfInterest: Array of 3-5 locations per day for each visited day from {{{duration}}} days with:
+2. pointsOfInterest: Array of minimum 3 to 5 locations per day for each visited days from {{{duration}}} days with:
    - name: EXACT official name (as found on Google Maps)
    - description: Brief description
+   - address: EXACT address (as found on Google Maps)
+   - time: recommended average time to spent on this location according to the internet feedbacks in minutes
+   - day: recommended day number of the whole travel out of 3 days when it is better to visit this location because it is close to other locations in the same area
+   - cost: the cost of visiting this location. For example price of the ticket, etc. Use actual information from the official sources. If no cost set to "Free". If no information was found say "Not found"
 
 Focus on well-known, easily findable locations. Use precise, official names.
 
@@ -115,7 +183,11 @@ const generatePOIsFlow = ai.defineFlow(
         planName: z.string(),
         pointsOfInterest: z.array(z.object({
           name: z.string(),
+          address: z.string(),
           description: z.string().optional(),
+          time: z.number(),
+          day: z.number(),
+          cost: z.string(),
         }))
       }))
     }),
@@ -137,13 +209,20 @@ Trip Details:
 - Duration: {{{duration}}} days
 - Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 - Attraction Type: {{{attractionType}}}
+{{#if includeSurroundings}}
+Also include noteworthy attractions in the surrounding areas, up to 200km away.
+{{/if}}
 
-CRITICAL: Provide EXACT coordinates (4+ decimal places) for well-known locations only.
+CRITICAL RULES:
+- Provide EXACT coordinates (4+ decimal places) for well-known locations only.
+- Include noteworthy attractions in the surrounding areas, up to 200km away.
+- All locations MUST be grouped by days based on their position to each other. Group close locations into one day but don't forget to split all journey into {{{duration}}} days.
 
 For each plan:
 1. planName: Descriptive theme
 2. pointsOfInterest: 5-7 locations with:
    - name: Official name as on Google Maps
+   - address: EXACT address (as found on Google Maps)
    - description: Brief, engaging description
    - latitude: PRECISE coordinate (e.g., 38.6919 NOT 38.69)
    - longitude: PRECISE coordinate (e.g., -9.2158 NOT -9.22)
@@ -151,7 +230,7 @@ For each plan:
 Only include locations where you're confident of exact coordinates.
 Focus on major tourist attractions, museums, landmarks with verified GPS data.
 
-Verify each coordinate mentally before including it.`,
+Verify each coordinate twice and make sure they are correct mentally before including it.`,
 });
 
 const enhancedFlow = ai.defineFlow(
@@ -179,29 +258,31 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
     console.log('POIs generated:', poisOnly);
 
     if (poisOnly?.travelPlans?.length > 0) {
-      const city = input.destination.split(',')[0]?.trim() || input.destination;
-      const country = input.destination.split(',').pop()?.trim() || 'Portugal';
       
       const plansWithCoords = await Promise.all(
         poisOnly.travelPlans.map(async (plan) => {
-          console.log(`Processing plan: ${plan.planName}`);
+          console.log(`>>> Processing plan: ${plan.planName} with ${plan.pointsOfInterest.length} POIs`);
           
           const poisWithCoords = [];
           
           for (const poi of plan.pointsOfInterest) {
-            console.log(`Geocoding: ${poi.name}`);
-            const coords = await simpleGeocode(poi.name, city, country);
+            console.debug(`Geocoding: ${poi.name}`);
+            const coords = await geocodeWithGoogle(poi.name, poi.address);
             
             if (coords) {
               poisWithCoords.push({
                 name: poi.name,
                 description: poi.description,
+                address: poi.address,
+                day: poi.day,
+                time: poi.time,
+                cost: poi.cost,
                 latitude: coords.lat,
                 longitude: coords.lon,
               });
-              console.log(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
+              console.debug(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
             } else {
-              console.log(`✗ Failed to geocode: ${poi.name}`);
+              console.error(`✗ Failed to geocode: ${poi.name}`);
             }
           }
           
@@ -221,7 +302,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
     }
 
     // Strategy 2: Enhanced AI prompt with better coordinate instructions
-    console.log('Strategy 1 failed, trying Strategy 2: Enhanced AI prompt...');
+    console.error('Strategy 1 failed, trying Strategy 2: Enhanced AI prompt...');
     const enhancedResult = await enhancedFlow(input);
     
     if (enhancedResult?.travelPlans?.length > 0) {
@@ -239,6 +320,11 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
           description: 'Explore the heart of the city',
           latitude: 38.7223,  // Lisbon center as example
           longitude: -9.1393,
+          address: "City Center, Lisbon, Portugal",
+          day: 1,
+          time: 111,
+          cost: "Free",
+
         }]
       }]
     };

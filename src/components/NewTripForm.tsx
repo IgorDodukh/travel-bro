@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
+import { Switch } from './ui/switch';
 
 const initialFormState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -35,6 +36,7 @@ export default function NewTripForm() {
     transport: '',
     interests: '', 
     attractionType: '',
+    includeSurroundings: false,
   });
 
   const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
@@ -46,6 +48,10 @@ export default function NewTripForm() {
 
   const handleSelectChange = (name: string, value: string) => {
     setClientFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSwitchChange = (checked: boolean) => {
+    setClientFormData(prev => ({ ...prev, includeSurroundings: checked }));
   };
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
@@ -61,6 +67,7 @@ export default function NewTripForm() {
     formData.append('transport', clientFormData.transport);
     formData.append('interests', clientFormData.interests);
     formData.append('attractionType', clientFormData.attractionType);
+    formData.append('includeSurroundings', clientFormData.includeSurroundings.toString());
     
     startTransition(async () => {
       // Directly call formAction with the formData.
@@ -82,6 +89,7 @@ export default function NewTripForm() {
           transport: clientFormData.transport,
           interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
           attractionType: clientFormData.attractionType,
+          includeSurroundings: clientFormData.includeSurroundings,
         };
         
         if (typeof window !== 'undefined') {
@@ -118,6 +126,25 @@ export default function NewTripForm() {
                 <Input id="destination" name="destination" placeholder="e.g., Paris, France" value={clientFormData.destination} onChange={handleInputChange} required />
                 {state?.errors?.destination && <p className="text-sm text-destructive mt-1">{state.errors.destination[0]}</p>}
               </div>
+              <div className="flex items-center space-x-3 pt-2">
+                <Switch
+                  id="includeSurroundings"
+                  checked={clientFormData.includeSurroundings}
+                  onCheckedChange={handleSwitchChange}
+                />
+                <div className="grid gap-1.5 leading-none">
+                    <Label
+                    htmlFor="includeSurroundings"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                    Explore Surrounding Areas
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                    Include locations up to 200km around.
+                    </p>
+                </div>
+              </div>
+
               <div>
                 <Label htmlFor="duration">How many days?</Label>
                 <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} required />

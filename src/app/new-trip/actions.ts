@@ -10,6 +10,7 @@ const NewTripFormSchema = z.object({
   transport: z.string().min(1, "Transport type is required"),
   interests: z.array(z.string()).min(1, "At least one interest is required"),
   attractionType: z.string().min(1, "Attraction type is required"),
+  includeSurroundings: z.boolean().optional(),
 });
 
 export type NewTripFormActionState = {
@@ -32,6 +33,7 @@ export async function handleGeneratePlansAction(
       transport: formData.get('transport') as string,
       interests: (formData.get('interests') as string)?.split(',').map(i => i.trim()).filter(i => i) || [],
       attractionType: formData.get('attractionType') as string,
+      includeSurroundings: formData.get('includeSurroundings') === 'true',
     };
 
     const validatedFields = NewTripFormSchema.safeParse(rawFormData);

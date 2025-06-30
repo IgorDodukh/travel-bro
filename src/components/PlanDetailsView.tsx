@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef }  from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { TravelPlan, DailyItinerary, PointOfInterest, NewTripFormState, AiGeneratedPlan, AiGeneratedPointOfInterest } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import DailyItineraryView from './DailyItineraryView';
@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
-import { optimizeItinerary } from '@/lib/itineraryOptimization';
+import { groupByDay } from '@/lib/itineraryOptimization';
 
 // Dynamically import InteractiveMap to ensure it's client-side only
 const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), {
@@ -49,26 +49,24 @@ export async function createTravelPlanFromAi(
   formInput: NewTripFormState
 ): Promise<Omit<TravelPlan, 'id'>> {
   const numDays = formInput.duration;
-  
+
   // Flatten all points of interest from the AI plan for optimization
   const allAiPois: PointOfInterest[] = Array.isArray(aiPlan.pointsOfInterest)
     ? aiPlan.pointsOfInterest.map((aiPoi: AiGeneratedPointOfInterest) => ({
-        id: crypto.randomUUID(),
-        name: aiPoi.name,
-        description: aiPoi.description || `Details for ${aiPoi.name}`,
-        location: {
-          lat: aiPoi.latitude !== undefined ? aiPoi.latitude : 0,
-          lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
-        },
-        type: 'generated' as 'generated',
-        dayIndex: 0, // Temporary day index before optimization
-      }))
+      id: crypto.randomUUID(),
+      name: aiPoi.name,
+      description: aiPoi.description || `Details for ${aiPoi.name}`,
+      location: {
+        lat: aiPoi.latitude !== undefined ? aiPoi.latitude : 0,
+        lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
+      },
+      type: 'generated' as 'generated',
+      dayIndex: aiPoi.day,
+    }))
     : [];
 
-  // Optimize the itinerary (this function will assign dayIndex to each POI)
-  const optimizedPois = await optimizeItinerary(allAiPois, numDays);
+  const optimizedPois = groupByDay(allAiPois);
 
-  // Use the daily itineraries directly from the optimization result
   const dailyItineraries: DailyItinerary[] = optimizedPois;
   return {
     name: aiPlan.planName || `Trip to ${formInput.destination}`,
@@ -124,7 +122,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     setIsAddPoiDialogOpen(true);
   };
 
-  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type' | 'location'> & { location?: { lat: number, lng: number} }) => {
+  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type' | 'location'> & { location?: { lat: number, lng: number } }) => {
     if (targetDayForNewPoi === null) return;
 
     setPlan(prevPlan => {
@@ -133,7 +131,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           let updatedPois: PointOfInterest[];
           if (editingPoi) {
             updatedPois = dayItinerary.pointsOfInterest.map(p =>
-              p.id === editingPoi.id ? { ...p, ...poiData, location: poiData.location || p.location || { lat: 0, lng: 0} } : p
+              p.id === editingPoi.id ? { ...p, ...poiData, location: poiData.location || p.location || { lat: 0, lng: 0 } } : p
             );
           } else {
             const newPoi: PointOfInterest = {
@@ -172,12 +170,12 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
   };
 
   const handleSaveChanges = () => {
-     savePlanToStorage(plan);
-     toast({
-        title: "Changes Saved!",
-        description: `Your updates to "${plan.name}" have been saved.`,
-     });
-     setCurrentMode('existing');
+    savePlanToStorage(plan);
+    toast({
+      title: "Changes Saved!",
+      description: `Your updates to "${plan.name}" have been saved.`,
+    });
+    setCurrentMode('existing');
   };
 
   const toggleEditMode = () => {
@@ -219,11 +217,11 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
                 <Save className="w-4 h-4 mr-2" /> Save Changes
               </Button>
               <Button variant="outline" onClick={toggleEditMode}>
-                 Cancel Editing
+                Cancel Editing
               </Button>
             </>
           )}
-          { (currentMode === 'existing' || currentMode === 'editing-existing') && onDeletePlan && (
+          {(currentMode === 'existing' || currentMode === 'editing-existing') && onDeletePlan && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">
@@ -296,23 +294,23 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
             />
           ))}
           {(currentMode === 'new' || currentMode === 'editing-existing') && plan.dailyItineraries.length < plan.duration && (
-             <Button
-                variant="outline"
-                className="w-full mt-4"
-                onClick={() => {
-                    const nextDayNumber = plan.dailyItineraries.length > 0 ? Math.max(...plan.dailyItineraries.map(d => d.day)) + 1 : 1;
-                    if (nextDayNumber <= plan.duration) {
-                        setPlan(prev => ({
-                            ...prev,
-                            dailyItineraries: [...prev.dailyItineraries, { day: nextDayNumber, pointsOfInterest: []}]
-                        }));
-                    } else {
-                        toast({ title: "Max duration reached", description: "Cannot add more days than specified.", variant: "destructive"});
-                    }
-                }}
-             >
-                <PlusCircle className="w-4 h-4 mr-2" /> Add Day {plan.dailyItineraries.length + 1} (up to {plan.duration})
-             </Button>
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => {
+                const nextDayNumber = plan.dailyItineraries.length > 0 ? Math.max(...plan.dailyItineraries.map(d => d.day)) + 1 : 1;
+                if (nextDayNumber <= plan.duration) {
+                  setPlan(prev => ({
+                    ...prev,
+                    dailyItineraries: [...prev.dailyItineraries, { day: nextDayNumber, pointsOfInterest: [] }]
+                  }));
+                } else {
+                  toast({ title: "Max duration reached", description: "Cannot add more days than specified.", variant: "destructive" });
+                }
+              }}
+            >
+              <PlusCircle className="w-4 h-4 mr-2" /> Add Day {plan.dailyItineraries.length + 1} (up to {plan.duration})
+            </Button>
           )}
         </div>
       )}
@@ -325,7 +323,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
 
       <AddPoiDialog
         isOpen={isAddPoiDialogOpen}
-        onClose={() => {setIsAddPoiDialogOpen(false); setEditingPoi(null);}}
+        onClose={() => { setIsAddPoiDialogOpen(false); setEditingPoi(null); }}
         onAddPoi={handleAddOrUpdatePoi}
         editingPoi={editingPoi}
       />

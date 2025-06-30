@@ -5,6 +5,10 @@ export interface AiGeneratedPointOfInterest {
   description?: string;
   latitude: number;
   longitude: number;
+  address: string;
+  time: number;
+  day: number;
+  cost: string;
 }
 
 // Corresponds to the AI flow output structure for a single generated plan
@@ -50,6 +54,7 @@ export interface TravelPlan {
     transport: string;
     interests: string[];
     attractionType: string;
+    includeSurroundings?: boolean;
   };
 }
 
@@ -61,4 +66,5 @@ export interface NewTripFormState {
   transport: string;
   interests: string[];
   attractionType: string;
+  includeSurroundings?: boolean;
 }

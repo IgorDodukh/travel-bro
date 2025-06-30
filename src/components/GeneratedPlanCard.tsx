@@ -15,7 +15,7 @@ export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProp
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
       <CardHeader>
         <CardTitle className="text-primary font-headline">{plan.planName || `Alternative Plan ${index + 1}`}</CardTitle>
-        <CardDescription>A unique itinerary based on your preferences.</CardDescription>
+        <CardDescription>A unique route of {plan.pointsOfInterest.length} locations based on your preferences.</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="space-y-2">
@@ -23,7 +23,7 @@ export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProp
             <ListChecks className="w-4 h-4 text-muted-foreground" />
             Key Highlights:
           </h4>
-          <ul className="list-disc list-inside pl-2 text-sm text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
+          <ul className="list-disc list-inside pl-2 text-sm text-muted-foreground space-y-1 max-h-33 overflow-y-auto">
             {plan.pointsOfInterest.slice(0, 5).map((poi: AiGeneratedPointOfInterest, idx: number) => (
               <li key={idx} className="truncate">{poi.name}</li>
             ))}
