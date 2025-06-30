@@ -256,18 +256,3 @@ export default function NewTripForm() {
     </Card>
   );
 }
-
-const style = document.createElement('style');
-style.innerHTML = `
-  .animate-fadeIn {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-`;
-if (typeof window !== 'undefined') {
-  document.head.appendChild(style);
-}
-

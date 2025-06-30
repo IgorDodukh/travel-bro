@@ -241,7 +241,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
             </div>
           </Popup>
         )}
-        <style jsx global>{`
+        <style>{`
           .mapboxgl-popup-content-custom {
             padding: 0;
             border-radius: 6px;
