@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useActionState } from 'react';
+import { useState, useTransition, useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
 
@@ -15,7 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
+import type { NewTripFormState } from '@/lib/types';
 import { Switch } from './ui/switch';
 
 const initialFormState: NewTripFormActionState = { success: false };
@@ -28,18 +28,58 @@ export default function NewTripForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  
+
   const [clientFormData, setClientFormData] = useState({
     destination: '',
-    duration: '3', 
+    duration: '3',
     accommodation: '',
     transport: '',
-    interests: '', 
+    interests: '',
     attractionType: '',
     includeSurroundings: false,
   });
 
   const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
+
+  useEffect(() => {
+    // This effect runs when the server action completes.
+    // We check for a message to ensure it doesn't run on initial render.
+    if (!state.message) {
+      return;
+    }
+
+    if (state.success && state.data) {
+      toast({
+        title: "Plans Generated!",
+        description: "Redirecting to your new travel plans...",
+        variant: "default",
+      });
+
+      const formInputToStore: NewTripFormState = {
+        destination: clientFormData.destination,
+        duration: parseInt(clientFormData.duration, 10),
+        accommodation: clientFormData.accommodation,
+        transport: clientFormData.transport,
+        interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
+        attractionType: clientFormData.attractionType,
+      };
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(state.data));
+        sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInputToStore));
+      }
+
+      router.push(`/new-trip/plans`);
+    } else if (!state.success && !state.errors) {
+      // Only show a toast for general errors, not for validation errors
+      // which are displayed inline next to the fields.
+      toast({
+        title: "Error Generating Plans",
+        description: state.message || "An unknown error occurred.",
+        variant: "destructive",
+      });
+    }
+  }, [state, clientFormData, router, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,43 +108,9 @@ export default function NewTripForm() {
     formData.append('interests', clientFormData.interests);
     formData.append('attractionType', clientFormData.attractionType);
     formData.append('includeSurroundings', clientFormData.includeSurroundings.toString());
-    
-    startTransition(async () => {
-      // Directly call formAction with the formData.
-      // The useActionState hook manages the result internally and updates `state`.
-      // We need to await the result of the action to react to its outcome here.
-      const result = await handleGeneratePlansAction(state, formData); 
-      
-      if (result.success && result.data) {
-        toast({
-          title: "Plans Generated!",
-          description: "Redirecting to your new travel plans...",
-          variant: "default",
-        });
 
-        const formInputToStore: NewTripFormState = {
-          destination: clientFormData.destination,
-          duration: parseInt(clientFormData.duration, 10),
-          accommodation: clientFormData.accommodation,
-          transport: clientFormData.transport,
-          interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
-          attractionType: clientFormData.attractionType,
-          includeSurroundings: clientFormData.includeSurroundings,
-        };
-        
-        if (typeof window !== 'undefined') {
-            sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(result.data));
-            sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInputToStore));
-        }
-        
-        router.push(`/new-trip/plans`);
-      } else {
-        toast({
-          title: "Error Generating Plans",
-          description: result.message || "An unknown error occurred.",
-          variant: "destructive",
-        });
-      }
+    startTransition(async () => {
+      formAction(formData);
     });
   };
 
@@ -133,15 +139,15 @@ export default function NewTripForm() {
                   onCheckedChange={handleSwitchChange}
                 />
                 <div className="grid gap-1.5 leading-none">
-                    <Label
+                  <Label
                     htmlFor="includeSurroundings"
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
+                  >
                     Explore Surrounding Areas
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
                     Include locations up to 200km around.
-                    </p>
+                  </p>
                 </div>
               </div>
 
@@ -211,7 +217,7 @@ export default function NewTripForm() {
               </div>
             </div>
           )}
-          
+
           {state?.message && !state.success && !state.errors && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
@@ -219,7 +225,7 @@ export default function NewTripForm() {
               <AlertDescription>{state.message}</AlertDescription>
             </Alert>
           )}
-           {state?.message && state.success && (
+          {state?.message && state.success && (
             <Alert variant="default" className="mt-4 bg-green-100 border-green-300 text-green-800">
               <CheckCircle className="h-4 w-4" />
               <AlertTitle>Success!</AlertTitle>
@@ -264,4 +270,4 @@ style.innerHTML = `
 if (typeof window !== 'undefined') {
   document.head.appendChild(style);
 }
-    
+
