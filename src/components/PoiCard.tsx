@@ -41,11 +41,11 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
           )}
         </div>
 
-        <div className="mt-3">
+        <div className="mt-2">
           {poi.type === 'custom' ? (
-            <Badge variant="accent" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">Custom POI</Badge>
+            <Badge variant="default">Custom POI</Badge>
           ) : (
-            <Badge variant="accent" className="bg-lime-500/20 text-lime-300 border-lime-500/30">Suggested POI</Badge>
+            <Badge variant="accent">Suggested POI</Badge>
           )}
         </div>
       </div>
