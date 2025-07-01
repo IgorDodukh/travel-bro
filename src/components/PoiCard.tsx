@@ -1,7 +1,7 @@
 import type { PointOfInterest } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GripVertical, ArrowUp, ArrowDown, Trash2, Edit3, MapPinIcon, Clock, DollarSign } from 'lucide-react';
+import { GripVertical, ArrowUp, ArrowDown, Trash2, Edit3, MapPinIcon, Clock, Wallet } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface PoiCardProps {
@@ -35,7 +35,7 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
           )}
           {poi.cost && (
             <div className="flex items-center gap-1.5">
-              <DollarSign className="w-4 h-4" />
+              <Wallet className="w-4 h-4" />
               <span>{poi.cost}</span>
             </div>
           )}
@@ -43,9 +43,9 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
 
         <div className="mt-3">
           {poi.type === 'custom' ? (
-            <Badge variant="default" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">Custom POI</Badge>
+            <Badge variant="accent" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">Custom POI</Badge>
           ) : (
-            <Badge variant="accent">Suggested POI</Badge>
+            <Badge variant="accent" className="bg-lime-500/20 text-lime-300 border-lime-500/30">Suggested POI</Badge>
           )}
         </div>
       </div>
