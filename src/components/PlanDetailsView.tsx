@@ -62,6 +62,8 @@ export async function createTravelPlanFromAi(
       },
       type: 'generated' as 'generated',
       dayIndex: aiPoi.day,
+      time: aiPoi.time,
+      cost: aiPoi.cost,
     }))
     : [];
 
@@ -139,8 +141,8 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
               description: poiData.description,
               id: crypto.randomUUID(),
               type: 'custom',
-              location: poiData.location || { lat: 0, lng: 0 },
-              dayIndex: poiData.dayIndex
+              location: { lat: 0, lng: 0 },
+              dayIndex: targetDayForNewPoi
             };
             updatedPois = [...dayItinerary.pointsOfInterest, newPoi];
           }
@@ -195,25 +197,25 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           <Button variant="outline" onClick={() => router.back()} className="mb-4 md:mb-0">
             <ChevronLeft className="w-4 h-4 mr-2" /> Back
           </Button>
-          <h2 className="text-3xl font-bold font-headline text-primary mt-2">{plan.name}</h2>
+          <h2 className="text-3xl font-bold font-headline text-foreground mt-2">{plan.name}</h2>
           <p className="text-muted-foreground">
             {plan.destination} - {plan.duration} days
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {currentMode === 'new' && (
-            <Button onClick={() => setIsSavePlanDialogOpen(true)} className="bg-accent hover:bg-opacity-80 text-accent-foreground">
+            <Button onClick={() => setIsSavePlanDialogOpen(true)} className="bg-lime-400 text-black hover:bg-lime-500">
               <Save className="w-4 h-4 mr-2" /> Save This Plan
             </Button>
           )}
           {currentMode === 'existing' && (
-            <Button onClick={toggleEditMode}>
+            <Button onClick={toggleEditMode} variant="outline" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black">
               <Edit className="w-4 h-4 mr-2" /> Edit Plan
             </Button>
           )}
           {currentMode === 'editing-existing' && (
             <>
-              <Button onClick={handleSaveChanges} className="bg-accent hover:bg-opacity-80 text-accent-foreground">
+              <Button onClick={handleSaveChanges} className="bg-lime-400 text-black hover:bg-lime-500">
                 <Save className="w-4 h-4 mr-2" /> Save Changes
               </Button>
               <Button variant="outline" onClick={toggleEditMode}>
@@ -231,7 +233,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogDescription className="text-muted-foreground/90">
                     This action cannot be undone. This will permanently delete your travel plan "{plan.name}".
                   </AlertDialogDescription>
                 </AlertDialogHeader>

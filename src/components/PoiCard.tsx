@@ -1,7 +1,7 @@
 import type { PointOfInterest } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { GripVertical, ArrowUp, ArrowDown, Trash2, Edit3, MapPinIcon } from 'lucide-react';
+import { GripVertical, ArrowUp, ArrowDown, Trash2, Edit3, MapPinIcon, Clock, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface PoiCardProps {
@@ -21,13 +21,29 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
       {isEditingPlan && <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab flex-shrink-0" />}
       <div className="flex-grow">
         <h4 className="font-semibold text-foreground text-md flex items-center gap-2">
-          <MapPinIcon className="w-4 h-4 text-primary" />
+          <MapPinIcon className="w-4 h-4 text-cyan-400" />
           {poi.name}
         </h4>
         {poi.description && <p className="text-sm text-muted-foreground mt-1">{poi.description}</p>}
-        <div className="mt-2">
+        
+        <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground/80">
+          {poi.time != null && (
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>{poi.time} min</span>
+            </div>
+          )}
+          {poi.cost && (
+            <div className="flex items-center gap-1.5">
+              <DollarSign className="w-4 h-4" />
+              <span>{poi.cost}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-3">
           {poi.type === 'custom' ? (
-            <Badge variant="default">Custom POI</Badge>
+            <Badge variant="default" className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">Custom POI</Badge>
           ) : (
             <Badge variant="accent">Suggested POI</Badge>
           )}

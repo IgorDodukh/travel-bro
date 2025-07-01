@@ -29,6 +29,8 @@ export interface PointOfInterest {
   description?: string;
   location?: { lat: number; lng: number }; // For map view
   type: 'generated' | 'custom';
+  time?: number; // in minutes
+  cost?: string;
 }
 
 export interface DailyItinerary {
