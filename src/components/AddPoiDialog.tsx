@@ -151,7 +151,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
             </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="relative grid gap-2">
+          <div className="grid gap-2">
             <Label htmlFor="poi-name">
               Location Name
             </Label>
@@ -171,24 +171,23 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
                 autoComplete="off"
               />
               {isFetching && !isSelectionInProgress && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+              {suggestions.length > 0 && (
+                   <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
+                      <ul className="py-1">
+                          {suggestions.map((suggestion) => (
+                              <li
+                                  key={suggestion.place_id}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+                                  onClick={() => handleSelectSuggestion(suggestion)}
+                              >
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span>{suggestion.description}</span>
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
+              )}
             </div>
-
-            {suggestions.length > 0 && (
-                 <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
-                    <ul className="py-1">
-                        {suggestions.map((suggestion) => (
-                            <li
-                                key={suggestion.place_id}
-                                className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
-                                onClick={() => handleSelectSuggestion(suggestion)}
-                            >
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span>{suggestion.description}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
           </div>
           {address && (
             <div className="grid gap-2">
