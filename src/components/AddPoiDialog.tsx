@@ -43,6 +43,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
 
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(false);
+  const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
 
   // Use a ref to prevent suggestions from showing on initial mount/focus
   const isMounted = useRef(false);
@@ -94,15 +95,20 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
   const debouncedFetch = useRef(debounce(fetchSuggestions, 300)).current;
 
   useEffect(() => {
-    if (isMounted.current && name && !location) { // Only fetch if a location hasn't been set
+    // We only fetch suggestions if the user is typing, a final location has NOT been selected,
+    // and we are not in the middle of processing a selection.
+    if (isMounted.current && name && !location && !isSelectionInProgress) {
         debouncedFetch(name);
     } else {
+        // In all other cases (e.g., after selection, on clear), cancel pending fetches and clear suggestions.
+        debouncedFetch.cancel();
         setSuggestions([]);
     }
-  }, [name, location, debouncedFetch]);
+  }, [name, location, isSelectionInProgress, debouncedFetch]);
 
   const handleSelectSuggestion = async (suggestion: any) => {
     debouncedFetch.cancel(); // Cancel any pending suggestion fetches
+    setIsSelectionInProgress(true); // Prevent useEffect from re-fetching while we get details
     setName(suggestion.description);
     setSuggestions([]);
     setIsFetching(true);
@@ -114,7 +120,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
             const { lat, lng } = data.result.geometry.location;
             setLocation({ lat, lng });
             setAddress(data.result.formatted_address);
-            setName(data.result.name); // Use the official name
+            setName(data.result.name); // Use the official name from details
         }
     } catch (error) {
         console.error("Failed to fetch place details:", error);
@@ -122,6 +128,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
         setLocation(null);
     } finally {
         setIsFetching(false);
+        setIsSelectionInProgress(false); // Re-enable suggestions on new user input
     }
   };
 
@@ -154,7 +161,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
                 value={name}
                 onChange={(e) => {
                   setName(e.target.value);
-                  // Clear location if user starts typing again
+                  // Clear location if user starts typing again, allowing a new search
                   if (location) {
                     setLocation(null);
                     setAddress(null);
@@ -163,7 +170,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
                 placeholder="e.g., Eiffel Tower, Paris"
                 autoComplete="off"
               />
-              {isFetching && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+              {isFetching && !isSelectionInProgress && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
             </div>
 
             {suggestions.length > 0 && (
