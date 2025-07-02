@@ -45,7 +45,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>{editingPoi ? 'Edit Point of Interest' : 'Add Custom Point of Interest'}</DialogTitle>
-            <DialogDescription> // Add DialogDescription here
+            <DialogDescription>
               Fill in the details for the point of interest.
             </DialogDescription>
         </DialogHeader>
