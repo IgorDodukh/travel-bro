@@ -149,6 +149,8 @@ Duration: {{{duration}}} days
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Attraction Type: {{{attractionType}}}
 
+IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
+
 CRITICAL RULES:
 {{#if includeSurroundings}}
 - Include noteworthy attractions in the surrounding areas, up to 200km away.
@@ -233,6 +235,8 @@ Trip Details:
 {{#if includeSurroundings}}
 Also include noteworthy attractions in the surrounding areas, up to 200km away.
 {{/if}}
+
+IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
 CRITICAL RULES:
 - Provide EXACT coordinates (4+ decimal places) for well-known locations only.
