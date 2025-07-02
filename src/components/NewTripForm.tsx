@@ -10,15 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2, MapPin } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, MapPin, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { NewTripFormState } from '@/lib/types';
 import { Switch } from './ui/switch';
 import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
 
 const initialFormState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -33,7 +33,7 @@ const clientSchema = z.object({
     }),
   accommodation: z.string().min(1, { message: "Accommodation type is required" }),
   transport: z.string().min(1, { message: "Transport type is required" }),
-  interests: z.string().min(1, { message: "At least one interest is required" }),
+  interests: z.array(z.string()).min(1, { message: "At least one interest is required" }),
   attractionType: z.string().min(1, { message: "Attraction style is required" }),
 });
 
@@ -78,14 +78,11 @@ export default function NewTripForm() {
     duration: '3',
     accommodation: '',
     transport: '',
-    interests: '',
+    interests: [] as string[],
     attractionType: attractionStyleMap[1],
     includeSurroundings: false,
   });
-
-  const [destinationSuggestions, setDestinationSuggestions] = useState<any[]>([]);
-  const [isFetchingDestination, setIsFetchingDestination] = useState(false);
-  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+  const [interestInput, setInterestInput] = useState('');
 
   // Use a ref to get latest form data in the useEffect without adding it as a dependency
   const clientFormDataRef = useRef(clientFormData);
@@ -111,7 +108,7 @@ export default function NewTripForm() {
         duration: parseInt(latestClientFormData.duration, 10),
         accommodation: latestClientFormData.accommodation,
         transport: latestClientFormData.transport,
-        interests: latestClientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
+        interests: latestClientFormData.interests,
         attractionType: latestClientFormData.attractionType,
         includeSurroundings: latestClientFormData.includeSurroundings,
       };
@@ -167,6 +164,10 @@ export default function NewTripForm() {
     }
   }, []);
 
+  const [destinationSuggestions, setDestinationSuggestions] = useState<any[]>([]);
+  const [isFetchingDestination, setIsFetchingDestination] = useState(false);
+  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+
   const debouncedFetch = useRef(debounce(fetchDestinationSuggestions, 300)).current;
 
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function NewTripForm() {
     }
   }, [clientFormData.destination, showDestinationSuggestions, debouncedFetch]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setClientFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -188,6 +189,7 @@ export default function NewTripForm() {
       });
     }
   };
+  
 
   const handleSelectChange = (name: string, value: string) => {
     setClientFormData(prev => ({ ...prev, [name]: value }));
@@ -220,6 +222,32 @@ export default function NewTripForm() {
             return newErrors;
         });
     }
+  };
+
+  const handleInterestKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const newInterest = interestInput.trim();
+        if (newInterest && !clientFormData.interests.includes(newInterest)) {
+            const newInterests = [...clientFormData.interests, newInterest];
+            setClientFormData(prev => ({ ...prev, interests: newInterests }));
+            if (errors.interests) {
+                setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.interests;
+                    return newErrors;
+                });
+            }
+        }
+        setInterestInput('');
+    }
+  };
+
+  const handleRemoveInterest = (interestToRemove: string) => {
+      setClientFormData(prev => ({
+          ...prev,
+          interests: prev.interests.filter(interest => interest !== interestToRemove)
+      }));
   };
 
   const validateStep = (step: number) => {
@@ -283,13 +311,18 @@ export default function NewTripForm() {
       </CardHeader>
       <form
         action={formAction}
-        noValidate
         onSubmit={(e) => {
-          // Safeguard to ensure form is only submitted on the last step
           if (currentStep !== totalSteps) {
             e.preventDefault();
+            return;
+          }
+          const result = clientSchema.safeParse(clientFormData);
+          if (!result.success) {
+            e.preventDefault();
+            setErrors(result.error.flatten().fieldErrors);
           }
         }}
+        noValidate
       >
         <CardContent className="space-y-6">
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
@@ -403,8 +436,31 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} />
-              <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent has-[:focus]:ring-2 has-[:focus]:ring-ring has-[:focus]:ring-offset-0">
+                  {clientFormData.interests.map((interest) => (
+                      <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
+                          {interest}
+                          <button
+                              type="button"
+                              className="rounded-full ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                              onClick={() => handleRemoveInterest(interest)}
+                              aria-label={`Remove ${interest}`}
+                          >
+                              <X className="h-3 w-3" />
+                          </button>
+                      </Badge>
+                  ))}
+                  <Input
+                      id="interests"
+                      placeholder={clientFormData.interests.length > 0 ? "Add more..." : "e.g., museums, hiking, local food..."}
+                      value={interestInput}
+                      onChange={(e) => setInterestInput(e.target.value)}
+                      onKeyDown={handleInterestKeyDown}
+                      className="flex-1 border-none shadow-none focus-visible:ring-0 p-0 h-8 bg-transparent min-w-[120px]"
+                      autoComplete="off"
+                  />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Press Enter or a comma to add an interest.</p>
               {errors?.interests && <p className="text-sm text-destructive mt-1">{errors.interests[0]}</p>}
             </div>
              <div>
@@ -431,6 +487,7 @@ export default function NewTripForm() {
           </div>
           
           {/* Add hidden inputs to hold values from custom components for form submission */}
+          <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />
           <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
           <input type="hidden" name="transport" value={clientFormData.transport} />
           <input type="hidden" name="attractionType" value={clientFormData.attractionType} />
@@ -473,5 +530,3 @@ export default function NewTripForm() {
     </Card>
   );
 }
-
-    
