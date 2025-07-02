@@ -6,8 +6,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'RoamReady - Your Personal Travel Planner',
-  description: 'Plan your next adventure with RoamReady, generating personalized travel itineraries.',
+  title: 'PlanKaplan - Your Personal Travel Planner',
+  description: 'Plan your next adventure with PlanKaplan, generating personalized travel itineraries.',
 };
 
 export default function RootLayout({

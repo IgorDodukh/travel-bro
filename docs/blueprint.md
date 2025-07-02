@@ -1,4 +1,4 @@
-# **App Name**: RoamReady
+# **App Name**: PlanKapkan
 
 ## Core Features:
 
