@@ -21,7 +21,7 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
       {isEditingPlan && <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab flex-shrink-0" />}
       <div className="flex-grow">
         <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+            {/* <MapPin className="w-4 h-4 text-primary flex-shrink-0" /> */}
             <h4 className="font-semibold text-foreground text-md">
             {poi.name}
             </h4>
