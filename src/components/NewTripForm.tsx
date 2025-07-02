@@ -198,9 +198,6 @@ export default function NewTripForm() {
       fieldsToValidate = ['destination', 'duration'];
     } else if (step === 2) {
       fieldsToValidate = ['accommodation', 'transport'];
-    } else if (step === 3) {
-      // Final submit is handled by server action validation, this is for the 'Next' button
-      fieldsToValidate = ['interests', 'attractionType'];
     }
 
     if (fieldsToValidate.length === 0) return true;
@@ -266,7 +263,9 @@ export default function NewTripForm() {
                   autoComplete="off"
                 />
                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                   {isFetchingDestination && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <div className="h-4 w-4">
+                      {isFetchingDestination && <Loader2 className="h-full w-full animate-spin" />}
+                    </div>
                  </div>
                  {showDestinationSuggestions && destinationSuggestions.length > 0 && (
                   <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
