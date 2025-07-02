@@ -209,17 +209,17 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
             </Button>
           )}
           {currentMode === 'existing' && (
-            <Button onClick={toggleEditMode} variant="outline" className="border-lime-400 text-lime-400 hover:bg-lime-400 hover:text-black">
+            <Button onClick={toggleEditMode} className="bg-lime-400 text-black hover:bg-lime-500">
               <Edit className="w-4 h-4 mr-2" /> Edit Plan
             </Button>
           )}
           {currentMode === 'editing-existing' && (
             <>
               <Button onClick={handleSaveChanges} className="bg-lime-400 text-black hover:bg-lime-500">
-                <Save className="w-4 h-4 mr-2" /> Save Changes
+                <Save className="w-4 h-4 mr-2" /> Save
               </Button>
               <Button variant="outline" onClick={toggleEditMode}>
-                Cancel Editing
+                Cancel
               </Button>
             </>
           )}
@@ -227,7 +227,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete Plan
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
