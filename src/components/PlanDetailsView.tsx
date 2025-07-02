@@ -56,6 +56,7 @@ export async function createTravelPlanFromAi(
       id: crypto.randomUUID(),
       name: aiPoi.name,
       description: aiPoi.description || `Details for ${aiPoi.name}`,
+      address: aiPoi.address,
       location: {
         lat: aiPoi.latitude !== undefined ? aiPoi.latitude : 0,
         lng: aiPoi.longitude !== undefined ? aiPoi.longitude : 0,
@@ -124,7 +125,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     setIsAddPoiDialogOpen(true);
   };
 
-  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type' | 'location'> & { location?: { lat: number, lng: number } }) => {
+  const handleAddOrUpdatePoi = (poiData: Omit<PointOfInterest, 'id' | 'type' | 'dayIndex'>) => {
     if (targetDayForNewPoi === null) return;
 
     setPlan(prevPlan => {
@@ -133,16 +134,14 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           let updatedPois: PointOfInterest[];
           if (editingPoi) {
             updatedPois = dayItinerary.pointsOfInterest.map(p =>
-              p.id === editingPoi.id ? { ...p, ...poiData, location: poiData.location || p.location || { lat: 0, lng: 0 } } : p
+              p.id === editingPoi.id ? { ...p, ...poiData } : p
             );
           } else {
             const newPoi: PointOfInterest = {
-              name: poiData.name,
-              description: poiData.description,
               id: crypto.randomUUID(),
               type: 'custom',
-              location: { lat: 0, lng: 0 },
-              dayIndex: targetDayForNewPoi
+              dayIndex: targetDayForNewPoi,
+              ...poiData,
             };
             updatedPois = [...dayItinerary.pointsOfInterest, newPoi];
           }

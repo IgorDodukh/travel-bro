@@ -1,77 +1,192 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { PointOfInterest } from '@/lib/types';
+import { Loader2, MapPin } from 'lucide-react';
 
 interface AddPoiDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddPoi: (poi: Omit<PointOfInterest, 'id' | 'type'>) => void;
-  editingPoi?: PointOfInterest | null; // For editing existing POI
+  onAddPoi: (poi: Omit<PointOfInterest, 'id' | 'type' | 'dayIndex'>) => void;
+  editingPoi?: PointOfInterest | null;
+}
+
+// A simple debounce function
+function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout;
+  return function(this: any, ...args: Parameters<T>) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
 }
 
 export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: AddPoiDialogProps) {
-  const [name, setName] = useState(editingPoi?.name || '');
-  const [description, setDescription] = useState(editingPoi?.description || '');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [address, setAddress] = useState<string | null>(null);
+  const [location, setLocation] = useState<{ lat: number, lng: number } | null>(null);
 
-  useState(() => {
-    if (editingPoi) {
-      setName(editingPoi.name);
-      setDescription(editingPoi.description || '');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(false);
+
+  // Use a ref to prevent suggestions from showing on initial mount/focus
+  const isMounted = useRef(false);
+
+  useEffect(() => {
+    if (isOpen) {
+        if (editingPoi) {
+            setName(editingPoi.name);
+            setDescription(editingPoi.description || '');
+            setAddress(editingPoi.address || null);
+            setLocation(editingPoi.location || null);
+        } else {
+            // Reset form when opening for a new POI
+            setName('');
+            setDescription('');
+            setAddress(null);
+            setLocation(null);
+            setSuggestions([]);
+        }
+        // Set mounted ref after a short delay to prevent initial fetch on open
+        setTimeout(() => {
+          isMounted.current = true;
+        }, 100);
     } else {
-      setName('');
-      setDescription('');
+      isMounted.current = false;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingPoi, isOpen]); // Reset form when dialog opens or editingPoi changes
+  }, [editingPoi, isOpen]);
+
+
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    setIsFetching(true);
+    try {
+      const response = await fetch(`/api/places-autocomplete?input=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setSuggestions(data.predictions || []);
+    } catch (error) {
+      console.error("Failed to fetch suggestions:", error);
+      setSuggestions([]);
+    } finally {
+      setIsFetching(false);
+    }
+  }, []);
+
+  const debouncedFetch = useRef(debounce(fetchSuggestions, 300)).current;
+
+  useEffect(() => {
+    if (isMounted.current && name && !location) { // Only fetch if a location hasn't been set
+        debouncedFetch(name);
+    } else {
+        setSuggestions([]);
+    }
+  }, [name, location, debouncedFetch]);
+
+  const handleSelectSuggestion = async (suggestion: any) => {
+    setName(suggestion.description);
+    setSuggestions([]);
+    setIsFetching(true);
+    try {
+        const response = await fetch(`/api/place-details?placeid=${suggestion.place_id}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        if (data.result) {
+            const { lat, lng } = data.result.geometry.location;
+            setLocation({ lat, lng });
+            setAddress(data.result.formatted_address);
+            setName(data.result.name); // Use the official name
+        }
+    } catch (error) {
+        console.error("Failed to fetch place details:", error);
+        setAddress('Could not fetch address.');
+        setLocation(null);
+    } finally {
+        setIsFetching(false);
+    }
+  };
 
 
   const handleSubmit = () => {
-    if (name.trim()) {
-      onAddPoi({ name, description });
-      setName('');
-      setDescription('');
+    // A location must be selected to add a POI
+    if (name.trim() && location) {
+      onAddPoi({ name, description, location, address: address || '' });
       onClose();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{editingPoi ? 'Edit Point of Interest' : 'Add Custom Point of Interest'}</DialogTitle>
             <DialogDescription>
-              Fill in the details for the point of interest.
+              Search for a location to add it to your itinerary.
             </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="poi-name" className="text-right">
-              Name
+          <div className="relative grid gap-2">
+            <Label htmlFor="poi-name">
+              Location Name
             </Label>
-            <Input
-              id="poi-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="col-span-3"
-              placeholder="e.g., Eiffel Tower"
-            />
+            <div className="relative">
+              <Input
+                id="poi-name"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  // Clear location if user starts typing again
+                  if (location) {
+                    setLocation(null);
+                    setAddress(null);
+                  }
+                }}
+                placeholder="e.g., Eiffel Tower, Paris"
+                autoComplete="off"
+              />
+              {isFetching && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+            </div>
+
+            {suggestions.length > 0 && (
+                 <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
+                    <ul className="py-1">
+                        {suggestions.map((suggestion) => (
+                            <li
+                                key={suggestion.place_id}
+                                className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+                                onClick={() => handleSelectSuggestion(suggestion)}
+                            >
+                                <MapPin className="h-4 w-4 text-muted-foreground" />
+                                <span>{suggestion.description}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="poi-description" className="text-right">
-              Description
+          {address && (
+            <div className="grid gap-2">
+                <Label>Address</Label>
+                <p className="text-sm text-muted-foreground p-2 bg-muted rounded-md">{address}</p>
+            </div>
+          )}
+          <div className="grid gap-2">
+            <Label htmlFor="poi-description">
+              Description / Notes
             </Label>
             <Textarea
               id="poi-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="col-span-3"
-              placeholder="Optional: notes, address, etc."
+              placeholder="Optional: Personal notes, reservation times, etc."
             />
           </div>
         </div>
@@ -79,7 +194,8 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
           <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="button" onClick={handleSubmit} disabled={!name.trim()}>
+          <Button type="button" onClick={handleSubmit} disabled={!location || isFetching}>
+            {isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {editingPoi ? 'Save Changes' : 'Add POI'}
           </Button>
         </DialogFooter>

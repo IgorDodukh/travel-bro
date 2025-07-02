@@ -20,11 +20,14 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
     <Card className="mb-2 shadow-sm bg-card/50 flex items-center p-3 gap-3 transition-all duration-300 hover:shadow-md hover:bg-card/70 border-border/20">
       {isEditingPlan && <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab flex-shrink-0" />}
       <div className="flex-grow">
-        <h4 className="font-semibold text-foreground text-md flex items-center gap-2">
-          <MapPinIcon className="w-4 h-4 text-cyan-400" />
-          {poi.name}
-        </h4>
-        {poi.description && <p className="text-sm text-muted-foreground mt-1">{poi.description}</p>}
+        <div className="flex items-center gap-2">
+            <MapPinIcon className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+            <h4 className="font-semibold text-foreground text-md">
+            {poi.name}
+            </h4>
+        </div>
+        {poi.address && <p className="text-sm text-muted-foreground/90 mt-1 pl-6">{poi.address}</p>}
+        {poi.description && <p className="text-sm text-muted-foreground mt-2">{poi.description}</p>}
         
         <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground/80">
           {poi.time != null && (

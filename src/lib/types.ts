@@ -27,6 +27,7 @@ export interface PointOfInterest {
   id: string;
   name: string;
   description?: string;
+  address?: string;
   location?: { lat: number; lng: number }; // For map view
   type: 'generated' | 'custom';
   time?: number; // in minutes
