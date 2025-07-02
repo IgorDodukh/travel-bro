@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useTransition, useActionState, useEffect } from 'react';
+import { useState, useTransition, useActionState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
 
@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { NewTripFormState } from '@/lib/types';
 import { Switch } from './ui/switch';
@@ -22,12 +22,34 @@ const initialFormState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
+// A simple debounce function with a cancel method
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
+  let timeout: NodeJS.Timeout;
+  
+  const debouncedFunc = function(this: any, ...args: Parameters<T>) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), delay);
+  };
+
+  debouncedFunc.cancel = () => {
+    clearTimeout(timeout);
+  };
+
+  return debouncedFunc;
+}
+
 export default function NewTripForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   const router = useRouter();
   const { toast } = useToast();
+  
+  const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
   const [isPending, startTransition] = useTransition();
+
 
   const [clientFormData, setClientFormData] = useState({
     destination: '',
@@ -39,7 +61,10 @@ export default function NewTripForm() {
     includeSurroundings: false,
   });
 
-  const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<any[]>([]);
+  const [isFetchingDestination, setIsFetchingDestination] = useState(false);
+  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
+
 
   useEffect(() => {
     if (!state.message) {
@@ -78,6 +103,39 @@ export default function NewTripForm() {
     }
   }, [state, clientFormData, router, toast]);
 
+  const fetchDestinationSuggestions = useCallback(async (query: string) => {
+    if (query.length < 2) {
+      setDestinationSuggestions([]);
+      return;
+    }
+    setIsFetchingDestination(true);
+    try {
+      const response = await fetch(`/api/places-autocomplete-cities?input=${encodeURIComponent(query)}`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const data = await response.json();
+      setDestinationSuggestions(data.predictions || []);
+      if (data.predictions && data.predictions.length > 0) {
+        setShowDestinationSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch destination suggestions:", error);
+      setDestinationSuggestions([]);
+    } finally {
+      setIsFetchingDestination(false);
+    }
+  }, []);
+
+  const debouncedFetch = useRef(debounce(fetchDestinationSuggestions, 300)).current;
+
+  useEffect(() => {
+    if (showDestinationSuggestions && clientFormData.destination) {
+      debouncedFetch(clientFormData.destination);
+    } else {
+      debouncedFetch.cancel();
+    }
+  }, [clientFormData.destination, showDestinationSuggestions, debouncedFetch]);
+
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setClientFormData(prev => ({ ...prev, [name]: value }));
@@ -91,22 +149,17 @@ export default function NewTripForm() {
     setClientFormData(prev => ({ ...prev, includeSurroundings: checked }));
   };
 
+  const handleSelectDestination = (suggestion: any) => {
+    setClientFormData(prev => ({ ...prev, destination: suggestion.description }));
+    setDestinationSuggestions([]);
+    setShowDestinationSuggestions(false);
+  };
+
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData();
-
-    formData.append('destination', clientFormData.destination);
-    formData.append('duration', clientFormData.duration);
-    formData.append('accommodation', clientFormData.accommodation);
-    formData.append('transport', clientFormData.transport);
-    formData.append('interests', clientFormData.interests);
-    formData.append('attractionType', clientFormData.attractionType);
-    formData.append('includeSurroundings', clientFormData.includeSurroundings.toString());
-
-    startTransition(async () => {
+  
+  const handleSubmitWithTransition = (formData: FormData) => {
+    startTransition(() => {
       formAction(formData);
     });
   };
@@ -119,101 +172,140 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form action={handleSubmitWithTransition}>
         <CardContent className="space-y-6">
-          {currentStep === 1 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
-              <div>
-                <Label htmlFor="destination">Where are you going?</Label>
-                <Input id="destination" name="destination" placeholder="e.g., Paris, France" value={clientFormData.destination} onChange={handleInputChange} required />
-                {state?.errors?.destination && <p className="text-sm text-destructive mt-1">{state.errors.destination[0]}</p>}
-              </div>
-              <div className="flex items-center space-x-3 pt-2">
-                <Switch
-                  id="includeSurroundings"
-                  checked={clientFormData.includeSurroundings}
-                  onCheckedChange={handleSwitchChange}
+          <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
+            <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
+            <div>
+              <Label htmlFor="destination">Where are you going?</Label>
+              <div className="relative">
+                <Input
+                  id="destination"
+                  name="destination"
+                  placeholder="e.g., Paris, France"
+                  value={clientFormData.destination}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    if (!showDestinationSuggestions) {
+                      setShowDestinationSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      if (showDestinationSuggestions) {
+                         setShowDestinationSuggestions(false);
+                      }
+                    }, 200);
+                  }}
+                  required
+                  autoComplete="off"
                 />
-                <div className="grid gap-1.5 leading-none">
-                  <Label
-                    htmlFor="includeSurroundings"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Explore Surrounding Areas
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Include locations up to 200km around.
-                  </p>
-                </div>
+                 {isFetchingDestination && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                 {showDestinationSuggestions && destinationSuggestions.length > 0 && (
+                  <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
+                      <ul className="py-1">
+                          {destinationSuggestions.map((suggestion) => (
+                              <li
+                                  key={suggestion.place_id}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+                                  onMouseDown={() => handleSelectDestination(suggestion)}
+                              >
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span>{suggestion.description}</span>
+                              </li>
+                          ))}
+                      </ul>
+                  </div>
+                )}
               </div>
-
-              <div>
-                <Label htmlFor="duration">How many days?</Label>
-                <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} required />
-                {state?.errors?.duration && <p className="text-sm text-destructive mt-1">{state.errors.duration[0]}</p>}
+              {state?.errors?.destination && <p className="text-sm text-destructive mt-1">{state.errors.destination[0]}</p>}
+            </div>
+            <div className="flex items-center space-x-3 pt-2">
+              <Switch
+                id="includeSurroundings"
+                checked={clientFormData.includeSurroundings}
+                onCheckedChange={handleSwitchChange}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label
+                  htmlFor="includeSurroundings"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Explore Surrounding Areas
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Include locations up to 200km around.
+                </p>
               </div>
             </div>
-          )}
 
-          {currentStep === 2 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-xl font-semibold mb-2">Accommodation & Transport</h3>
-              <div>
-                <Label htmlFor="accommodation">Preferred Accommodation</Label>
-                <Select name="accommodation" value={clientFormData.accommodation} onValueChange={(value) => handleSelectChange('accommodation', value)} required>
-                  <SelectTrigger><SelectValue placeholder="Select accommodation type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Hotel">Hotel</SelectItem>
-                    <SelectItem value="Hostel">Hostel</SelectItem>
-                    <SelectItem value="Airbnb">Airbnb</SelectItem>
-                    <SelectItem value="Resort">Resort</SelectItem>
-                    <SelectItem value="Boutique Hotel">Boutique Hotel</SelectItem>
-                  </SelectContent>
-                </Select>
-                {state?.errors?.accommodation && <p className="text-sm text-destructive mt-1">{state.errors.accommodation[0]}</p>}
-              </div>
-              <div>
-                <Label htmlFor="transport">Preferred Transport</Label>
-                <Select name="transport" value={clientFormData.transport} onValueChange={(value) => handleSelectChange('transport', value)} required>
-                  <SelectTrigger><SelectValue placeholder="Select transport type" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Car">Rental Car / Own Car</SelectItem>
-                    <SelectItem value="Public Transport">Public Transport</SelectItem>
-                    <SelectItem value="Walking">Mostly Walking</SelectItem>
-                    <SelectItem value="Ride-sharing">Ride-sharing / Taxis</SelectItem>
-                    <SelectItem value="Mixed">Mixed (Car & Public)</SelectItem>
-                  </SelectContent>
-                </Select>
-                {state?.errors?.transport && <p className="text-sm text-destructive mt-1">{state.errors.transport[0]}</p>}
-              </div>
+            <div>
+              <Label htmlFor="duration">How many days?</Label>
+              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} required />
+              {state?.errors?.duration && <p className="text-sm text-destructive mt-1">{state.errors.duration[0]}</p>}
             </div>
-          )}
+          </div>
 
-          {currentStep === 3 && (
-            <div className="space-y-4 animate-fadeIn">
-              <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
-              <div>
-                <Label htmlFor="interests">Your Interests</Label>
-                <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} required />
-                <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
-                {state?.errors?.interests && <p className="text-sm text-destructive mt-1">{state.errors.interests[0]}</p>}
-              </div>
-              <div>
-                <Label htmlFor="attractionType">Attraction Style</Label>
-                <Select name="attractionType" value={clientFormData.attractionType} onValueChange={(value) => handleSelectChange('attractionType', value)} required>
-                  <SelectTrigger><SelectValue placeholder="Select attraction style" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Unique local spots">Unique Local Spots</SelectItem>
-                    <SelectItem value="Typical touristic locations">Typical Tourist Locations</SelectItem>
-                    <SelectItem value="Mix of both">A Mix of Both</SelectItem>
-                    <SelectItem value="Off-the-beaten path">Off-the-beaten Path</SelectItem>
-                  </SelectContent>
-                </Select>
-                {state?.errors?.attractionType && <p className="text-sm text-destructive mt-1">{state.errors.attractionType[0]}</p>}
-              </div>
+          <div style={{ display: currentStep === 2 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
+            <h3 className="text-xl font-semibold mb-2">Accommodation & Transport</h3>
+            <div>
+              <Label htmlFor="accommodation">Preferred Accommodation</Label>
+              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation} required>
+                <SelectTrigger><SelectValue placeholder="Select accommodation type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hotel">Hotel</SelectItem>
+                  <SelectItem value="Hostel">Hostel</SelectItem>
+                  <SelectItem value="Airbnb">Airbnb</SelectItem>
+                  <SelectItem value="Resort">Resort</SelectItem>
+                  <SelectItem value="Boutique Hotel">Boutique Hotel</SelectItem>
+                </SelectContent>
+              </Select>
+              {state?.errors?.accommodation && <p className="text-sm text-destructive mt-1">{state.errors.accommodation[0]}</p>}
             </div>
-          )}
+            <div>
+              <Label htmlFor="transport">Preferred Transport</Label>
+              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport} required>
+                <SelectTrigger><SelectValue placeholder="Select transport type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Car">Rental Car / Own Car</SelectItem>
+                  <SelectItem value="Public Transport">Public Transport</SelectItem>
+                  <SelectItem value="Walking">Mostly Walking</SelectItem>
+                  <SelectItem value="Ride-sharing">Ride-sharing / Taxis</SelectItem>
+                  <SelectItem value="Mixed">Mixed (Car & Public)</SelectItem>
+                </SelectContent>
+              </Select>
+              {state?.errors?.transport && <p className="text-sm text-destructive mt-1">{state.errors.transport[0]}</p>}
+            </div>
+          </div>
+
+          <div style={{ display: currentStep === 3 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
+            <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
+            <div>
+              <Label htmlFor="interests">Your Interests</Label>
+              <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} required />
+              <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
+              {state?.errors?.interests && <p className="text-sm text-destructive mt-1">{state.errors.interests[0]}</p>}
+            </div>
+            <div>
+              <Label htmlFor="attractionType">Attraction Style</Label>
+              <Select onValueChange={(value) => handleSelectChange('attractionType', value)} value={clientFormData.attractionType} required>
+                <SelectTrigger><SelectValue placeholder="Select attraction style" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Unique local spots">Unique Local Spots</SelectItem>
+                  <SelectItem value="Typical touristic locations">Typical Tourist Locations</SelectItem>
+                  <SelectItem value="Mix of both">A Mix of Both</SelectItem>
+                  <SelectItem value="Off-the-beaten path">Off-the-beaten Path</SelectItem>
+                </SelectContent>
+              </Select>
+              {state?.errors?.attractionType && <p className="text-sm text-destructive mt-1">{state.errors.attractionType[0]}</p>}
+            </div>
+          </div>
+          
+          {/* Add hidden inputs to hold values from custom components for form submission */}
+          <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
+          <input type="hidden" name="transport" value={clientFormData.transport} />
+          <input type="hidden" name="attractionType" value={clientFormData.attractionType} />
+          <input type="hidden" name="includeSurroundings" value={String(clientFormData.includeSurroundings)} />
 
           {state?.message && !state.success && !state.errors && (
             <Alert variant="destructive" className="mt-4">
