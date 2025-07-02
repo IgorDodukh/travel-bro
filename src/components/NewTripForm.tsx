@@ -18,6 +18,7 @@ import { AlertCircle, CheckCircle, Loader2, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { NewTripFormState } from '@/lib/types';
 import { Switch } from './ui/switch';
+import { Slider } from '@/components/ui/slider';
 
 const initialFormState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -35,6 +36,13 @@ const clientSchema = z.object({
   interests: z.string().min(1, { message: "At least one interest is required" }),
   attractionType: z.string().min(1, { message: "Attraction style is required" }),
 });
+
+const attractionStyleMap = [
+  "Typical Tourist Locations",
+  "Mix of typical tourist locations and some unique local places",
+  "Unique Local Spots",
+  "Off-the-beaten Path, very unique untypical places to visit",
+];
 
 // A simple debounce function with a cancel method
 function debounce<T extends (...args: any[]) => any>(
@@ -71,7 +79,7 @@ export default function NewTripForm() {
     accommodation: '',
     transport: '',
     interests: '',
-    attractionType: '',
+    attractionType: attractionStyleMap[1],
     includeSurroundings: false,
   });
 
@@ -190,6 +198,11 @@ export default function NewTripForm() {
         return newErrors;
       });
     }
+  };
+  
+  const handleSliderChange = (value: number[]) => {
+    const numericValue = value[0];
+    handleSelectChange('attractionType', attractionStyleMap[numericValue]);
   };
 
   const handleSwitchChange = (checked: boolean) => {
@@ -394,17 +407,25 @@ export default function NewTripForm() {
               <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
               {errors?.interests && <p className="text-sm text-destructive mt-1">{errors.interests[0]}</p>}
             </div>
-            <div>
+             <div>
               <Label htmlFor="attractionType">Attraction Style</Label>
-              <Select onValueChange={(value) => handleSelectChange('attractionType', value)} value={clientFormData.attractionType}>
-                <SelectTrigger><SelectValue placeholder="Select attraction style" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Unique local spots">Unique Local Spots</SelectItem>
-                  <SelectItem value="Typical touristic locations">Typical Tourist Locations</SelectItem>
-                  <SelectItem value="Mix of both">A Mix of Both</SelectItem>
-                  <SelectItem value="Off-the-beaten path">Off-the-beaten Path</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="pt-4">
+                <Slider
+                  id="attractionType"
+                  min={0}
+                  max={3}
+                  step={1}
+                  value={[attractionStyleMap.indexOf(clientFormData.attractionType)]}
+                  onValueChange={handleSliderChange}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                  <span>Typical</span>
+                  <span>Unique</span>
+                </div>
+                <p className="text-sm text-center text-muted-foreground mt-3 h-10 flex items-center justify-center">
+                  {clientFormData.attractionType}
+                </p>
+              </div>
               {errors?.attractionType && <p className="text-sm text-destructive mt-1">{errors.attractionType[0]}</p>}
             </div>
           </div>
@@ -452,3 +473,5 @@ export default function NewTripForm() {
     </Card>
   );
 }
+
+    
