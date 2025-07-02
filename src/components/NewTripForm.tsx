@@ -238,7 +238,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form action={formAction}>
+      <form action={formAction} noValidate>
         <CardContent className="space-y-6">
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
             <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
@@ -263,7 +263,6 @@ export default function NewTripForm() {
                       }
                     }, 200);
                   }}
-                  required
                   autoComplete="off"
                 />
                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -309,7 +308,7 @@ export default function NewTripForm() {
 
             <div>
               <Label htmlFor="duration">How many days?</Label>
-              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} required />
+              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} />
               {errors?.duration && <p className="text-sm text-destructive mt-1">{errors.duration[0]}</p>}
             </div>
           </div>
@@ -318,7 +317,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Accommodation & Transport</h3>
             <div>
               <Label htmlFor="accommodation">Preferred Accommodation</Label>
-              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation} required>
+              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation}>
                 <SelectTrigger><SelectValue placeholder="Select accommodation type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Hotel">Hotel</SelectItem>
@@ -332,7 +331,7 @@ export default function NewTripForm() {
             </div>
             <div>
               <Label htmlFor="transport">Preferred Transport</Label>
-              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport} required>
+              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport}>
                 <SelectTrigger><SelectValue placeholder="Select transport type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Car">Rental Car / Own Car</SelectItem>
@@ -350,13 +349,13 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} required />
+              <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} />
               <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
               {errors?.interests && <p className="text-sm text-destructive mt-1">{errors.interests[0]}</p>}
             </div>
             <div>
               <Label htmlFor="attractionType">Attraction Style</Label>
-              <Select onValueChange={(value) => handleSelectChange('attractionType', value)} value={clientFormData.attractionType} required>
+              <Select onValueChange={(value) => handleSelectChange('attractionType', value)} value={clientFormData.attractionType}>
                 <SelectTrigger><SelectValue placeholder="Select attraction style" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Unique local spots">Unique Local Spots</SelectItem>
