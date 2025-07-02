@@ -427,7 +427,7 @@ export default function NewTripForm() {
             </Button>
           ) : <div />}
           {currentStep < totalSteps ? (
-            <Button type="button" onClick={nextStep} disabled={isPending} className="ml-auto">
+            <Button type="button" onClick={nextStep} className="ml-auto">
               Next
             </Button>
           ) : (
