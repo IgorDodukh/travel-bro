@@ -47,8 +47,7 @@ export default function NewTripForm() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [state, formAction] = useActionState(handleGeneratePlansAction, initialFormState);
-  const [isPending, startTransition] = useTransition();
+  const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormState);
 
 
   const [clientFormData, setClientFormData] = useState({
@@ -158,11 +157,6 @@ export default function NewTripForm() {
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
   
-  const handleSubmitWithTransition = (formData: FormData) => {
-    startTransition(() => {
-      formAction(formData);
-    });
-  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -172,7 +166,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form action={handleSubmitWithTransition}>
+      <form action={formAction}>
         <CardContent className="space-y-6">
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
             <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
@@ -200,7 +194,11 @@ export default function NewTripForm() {
                   required
                   autoComplete="off"
                 />
-                 {isFetchingDestination && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                 {isFetchingDestination && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                 )}
                  {showDestinationSuggestions && destinationSuggestions.length > 0 && (
                   <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
                       <ul className="py-1">
@@ -324,17 +322,16 @@ export default function NewTripForm() {
 
         </CardContent>
         <CardFooter className="flex justify-between">
-          {currentStep > 1 && (
+          {currentStep > 1 ? (
             <Button type="button" variant="outline" onClick={prevStep} disabled={isPending}>
               Back
             </Button>
-          )}
-          {currentStep < totalSteps && (
+          ) : <div />}
+          {currentStep < totalSteps ? (
             <Button type="button" onClick={nextStep} disabled={isPending} className="ml-auto">
               Next
             </Button>
-          )}
-          {currentStep === totalSteps && (
+          ) : (
             <Button type="submit" disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans

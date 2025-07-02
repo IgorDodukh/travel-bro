@@ -170,7 +170,11 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
                 placeholder="e.g., Eiffel Tower, Paris"
                 autoComplete="off"
               />
-              {isFetching && !isSelectionInProgress && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+              {isFetching && !isSelectionInProgress && (
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              )}
               {suggestions.length > 0 && (
                    <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
                       <ul className="py-1">
