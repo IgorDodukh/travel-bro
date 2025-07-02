@@ -168,14 +168,22 @@ export default function NewTripForm() {
     const { name, value } = e.target;
     setClientFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setClientFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
@@ -188,7 +196,11 @@ export default function NewTripForm() {
     setDestinationSuggestions([]);
     setShowDestinationSuggestions(false);
     if (errors.destination) {
-        setErrors(prev => ({...prev, destination: undefined}));
+        setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.destination;
+            return newErrors;
+        });
     }
   };
 
@@ -209,17 +221,35 @@ export default function NewTripForm() {
     const result = stepSchema.safeParse(clientFormData);
 
     if (!result.success) {
-      setErrors(result.error.flatten().fieldErrors);
+      // Merge new errors with existing ones instead of overwriting
+      setErrors(prev => ({ ...prev, ...result.error.flatten().fieldErrors }));
       return false;
     }
 
-    setErrors({});
+    // On success, clear errors only for the validated fields
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      for (const field of fieldsToValidate) {
+        delete newErrors[field];
+      }
+      return newErrors;
+    });
     return true;
   };
 
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
+      // If moving from step 2 to 3, clear any lingering errors for step 3 fields.
+      // This ensures step 3 starts fresh and errors only appear after a submit attempt.
+      if (currentStep === 2) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.interests;
+          delete newErrors.attractionType;
+          return newErrors;
+        });
+      }
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     }
   };
