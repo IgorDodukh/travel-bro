@@ -79,6 +79,10 @@ export default function NewTripForm() {
   const [isFetchingDestination, setIsFetchingDestination] = useState(false);
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 
+  // Use a ref to get latest form data in the useEffect without adding it as a dependency
+  const clientFormDataRef = useRef(clientFormData);
+  clientFormDataRef.current = clientFormData;
+
   useEffect(() => {
     if (state?.errors) {
       setErrors(state.errors);
@@ -107,14 +111,15 @@ export default function NewTripForm() {
         variant: "default",
       });
 
+      const latestClientFormData = clientFormDataRef.current;
       const formInputToStore: NewTripFormState = {
-        destination: clientFormData.destination,
-        duration: parseInt(clientFormData.duration, 10),
-        accommodation: clientFormData.accommodation,
-        transport: clientFormData.transport,
-        interests: clientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
-        attractionType: clientFormData.attractionType,
-        includeSurroundings: clientFormData.includeSurroundings,
+        destination: latestClientFormData.destination,
+        duration: parseInt(latestClientFormData.duration, 10),
+        accommodation: latestClientFormData.accommodation,
+        transport: latestClientFormData.transport,
+        interests: latestClientFormData.interests.split(',').map(i => i.trim()).filter(i => i),
+        attractionType: latestClientFormData.attractionType,
+        includeSurroundings: latestClientFormData.includeSurroundings,
       };
 
       if (typeof window !== 'undefined') {
@@ -130,7 +135,7 @@ export default function NewTripForm() {
         variant: "destructive",
       });
     }
-  }, [state, clientFormData, router, toast]);
+  }, [state, router, toast]);
 
   const fetchDestinationSuggestions = useCallback(async (query: string) => {
     if (query.length < 2) {
@@ -221,12 +226,10 @@ export default function NewTripForm() {
     const result = stepSchema.safeParse(clientFormData);
 
     if (!result.success) {
-      // Merge new errors with existing ones instead of overwriting
       setErrors(prev => ({ ...prev, ...result.error.flatten().fieldErrors }));
       return false;
     }
 
-    // On success, clear errors only for the validated fields
     setErrors(prev => {
       const newErrors = { ...prev };
       for (const field of fieldsToValidate) {
@@ -240,8 +243,6 @@ export default function NewTripForm() {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      // If moving from step 2 to 3, clear any lingering errors for step 3 fields.
-      // This ensures step 3 starts fresh and errors only appear after a submit attempt.
       if (currentStep === 2) {
         setErrors(prev => {
           const newErrors = { ...prev };
