@@ -84,23 +84,9 @@ export default function NewTripForm() {
   clientFormDataRef.current = clientFormData;
 
   useEffect(() => {
-    if (state?.errors) {
-      setErrors(state.errors);
-      // Find the first field with an error and navigate to its step
-      const errorFields = Object.keys(state.errors);
-      if (errorFields.length > 0) {
-        const firstErrorField = errorFields[0];
-        if (['destination', 'duration'].includes(firstErrorField)) {
-          setCurrentStep(1);
-        } else if (['accommodation', 'transport'].includes(firstErrorField)) {
-          setCurrentStep(2);
-        } else if (['interests', 'attractionType'].includes(firstErrorField)) {
-          setCurrentStep(3);
-        }
-      }
-    }
-    
-    if (!state.message) {
+    // This effect now ONLY handles the result of the form action
+    // It does not depend on clientFormData, preventing re-runs on every keystroke
+    if (!state || !state.message) {
       return;
     }
 
@@ -128,6 +114,20 @@ export default function NewTripForm() {
       }
 
       router.push(`/new-trip/plans`);
+    } else if (!state.success && state.errors) {
+      setErrors(state.errors);
+      // Find the first field with an error and navigate to its step
+      const errorFields = Object.keys(state.errors);
+      if (errorFields.length > 0) {
+        const firstErrorField = errorFields[0];
+        if (['destination', 'duration'].includes(firstErrorField)) {
+          setCurrentStep(1);
+        } else if (['accommodation', 'transport'].includes(firstErrorField)) {
+          setCurrentStep(2);
+        } else if (['interests', 'attractionType'].includes(firstErrorField)) {
+          setCurrentStep(3);
+        }
+      }
     } else if (!state.success && !state.errors) {
       toast({
         title: "Error Generating Plans",
@@ -230,6 +230,7 @@ export default function NewTripForm() {
       return false;
     }
 
+    // On success, clear errors for the validated fields
     setErrors(prev => {
       const newErrors = { ...prev };
       for (const field of fieldsToValidate) {
@@ -244,6 +245,7 @@ export default function NewTripForm() {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       if (currentStep === 2) {
+        // When moving from step 2 to 3, clear any lingering errors for step 3 fields
         setErrors(prev => {
           const newErrors = { ...prev };
           delete newErrors.interests;
@@ -266,7 +268,16 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form action={formAction} noValidate>
+      <form
+        action={formAction}
+        noValidate
+        onSubmit={(e) => {
+          // Safeguard to ensure form is only submitted on the last step
+          if (currentStep !== totalSteps) {
+            e.preventDefault();
+          }
+        }}
+      >
         <CardContent className="space-y-6">
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
             <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
