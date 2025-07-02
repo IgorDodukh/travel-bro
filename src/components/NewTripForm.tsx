@@ -4,6 +4,7 @@
 import { useState, useTransition, useActionState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,19 @@ import { Switch } from './ui/switch';
 const initialFormState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
+
+const clientSchema = z.object({
+  destination: z.string().min(1, { message: "Destination is required" }),
+  duration: z.string()
+    .min(1, { message: "Duration is required" })
+    .refine((val) => !isNaN(parseInt(val, 10)) && parseInt(val, 10) > 0, {
+      message: "Duration must be a positive number",
+    }),
+  accommodation: z.string().min(1, { message: "Accommodation type is required" }),
+  transport: z.string().min(1, { message: "Transport type is required" }),
+  interests: z.string().min(1, { message: "At least one interest is required" }),
+  attractionType: z.string().min(1, { message: "Attraction style is required" }),
+});
 
 // A simple debounce function with a cancel method
 function debounce<T extends (...args: any[]) => any>(
@@ -48,7 +62,8 @@ export default function NewTripForm() {
   const { toast } = useToast();
   
   const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormState);
-
+  
+  const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
   const [clientFormData, setClientFormData] = useState({
     destination: '',
@@ -64,8 +79,23 @@ export default function NewTripForm() {
   const [isFetchingDestination, setIsFetchingDestination] = useState(false);
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 
-
   useEffect(() => {
+    if (state?.errors) {
+      setErrors(state.errors);
+      // Find the first field with an error and navigate to its step
+      const errorFields = Object.keys(state.errors);
+      if (errorFields.length > 0) {
+        const firstErrorField = errorFields[0];
+        if (['destination', 'duration'].includes(firstErrorField)) {
+          setCurrentStep(1);
+        } else if (['accommodation', 'transport'].includes(firstErrorField)) {
+          setCurrentStep(2);
+        } else if (['interests', 'attractionType'].includes(firstErrorField)) {
+          setCurrentStep(3);
+        }
+      }
+    }
+    
     if (!state.message) {
       return;
     }
@@ -134,14 +164,19 @@ export default function NewTripForm() {
     }
   }, [clientFormData.destination, showDestinationSuggestions, debouncedFetch]);
 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setClientFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
     setClientFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSwitchChange = (checked: boolean) => {
@@ -152,9 +187,46 @@ export default function NewTripForm() {
     setClientFormData(prev => ({ ...prev, destination: suggestion.description }));
     setDestinationSuggestions([]);
     setShowDestinationSuggestions(false);
+    if (errors.destination) {
+        setErrors(prev => ({...prev, destination: undefined}));
+    }
   };
 
-  const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+  const validateStep = (step: number) => {
+    let fieldsToValidate: (keyof z.infer<typeof clientSchema>)[] = [];
+    if (step === 1) {
+      fieldsToValidate = ['destination', 'duration'];
+    } else if (step === 2) {
+      fieldsToValidate = ['accommodation', 'transport'];
+    } else if (step === 3) {
+      // Final submit is handled by server action validation, this is for the 'Next' button
+      fieldsToValidate = ['interests', 'attractionType'];
+    }
+
+    if (fieldsToValidate.length === 0) return true;
+
+    const stepSchema = clientSchema.pick(
+      fieldsToValidate.reduce((acc, field) => ({ ...acc, [field]: true }), {})
+    );
+
+    const result = stepSchema.safeParse(clientFormData);
+
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  };
+
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+    }
+  };
+  
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
   
 
@@ -194,11 +266,9 @@ export default function NewTripForm() {
                   required
                   autoComplete="off"
                 />
-                 {isFetchingDestination && (
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                 )}
+                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                   {isFetchingDestination && <Loader2 className="h-4 w-4 animate-spin" />}
+                 </div>
                  {showDestinationSuggestions && destinationSuggestions.length > 0 && (
                   <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
                       <ul className="py-1">
@@ -216,7 +286,7 @@ export default function NewTripForm() {
                   </div>
                 )}
               </div>
-              {state?.errors?.destination && <p className="text-sm text-destructive mt-1">{state.errors.destination[0]}</p>}
+              {errors?.destination && <p className="text-sm text-destructive mt-1">{errors.destination[0]}</p>}
             </div>
             <div className="flex items-center space-x-3 pt-2">
               <Switch
@@ -240,7 +310,7 @@ export default function NewTripForm() {
             <div>
               <Label htmlFor="duration">How many days?</Label>
               <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} required />
-              {state?.errors?.duration && <p className="text-sm text-destructive mt-1">{state.errors.duration[0]}</p>}
+              {errors?.duration && <p className="text-sm text-destructive mt-1">{errors.duration[0]}</p>}
             </div>
           </div>
 
@@ -258,7 +328,7 @@ export default function NewTripForm() {
                   <SelectItem value="Boutique Hotel">Boutique Hotel</SelectItem>
                 </SelectContent>
               </Select>
-              {state?.errors?.accommodation && <p className="text-sm text-destructive mt-1">{state.errors.accommodation[0]}</p>}
+              {errors?.accommodation && <p className="text-sm text-destructive mt-1">{errors.accommodation[0]}</p>}
             </div>
             <div>
               <Label htmlFor="transport">Preferred Transport</Label>
@@ -272,7 +342,7 @@ export default function NewTripForm() {
                   <SelectItem value="Mixed">Mixed (Car & Public)</SelectItem>
                 </SelectContent>
               </Select>
-              {state?.errors?.transport && <p className="text-sm text-destructive mt-1">{state.errors.transport[0]}</p>}
+              {errors?.transport && <p className="text-sm text-destructive mt-1">{errors.transport[0]}</p>}
             </div>
           </div>
 
@@ -282,7 +352,7 @@ export default function NewTripForm() {
               <Label htmlFor="interests">Your Interests</Label>
               <Textarea id="interests" name="interests" placeholder="e.g., museums, hiking, local food, photography, nightlife (comma-separated)" value={clientFormData.interests} onChange={handleInputChange} required />
               <p className="text-xs text-muted-foreground mt-1">Separate interests with a comma.</p>
-              {state?.errors?.interests && <p className="text-sm text-destructive mt-1">{state.errors.interests[0]}</p>}
+              {errors?.interests && <p className="text-sm text-destructive mt-1">{errors.interests[0]}</p>}
             </div>
             <div>
               <Label htmlFor="attractionType">Attraction Style</Label>
@@ -295,7 +365,7 @@ export default function NewTripForm() {
                   <SelectItem value="Off-the-beaten path">Off-the-beaten Path</SelectItem>
                 </SelectContent>
               </Select>
-              {state?.errors?.attractionType && <p className="text-sm text-destructive mt-1">{state.errors.attractionType[0]}</p>}
+              {errors?.attractionType && <p className="text-sm text-destructive mt-1">{errors.attractionType[0]}</p>}
             </div>
           </div>
           
