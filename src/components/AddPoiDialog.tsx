@@ -16,13 +16,23 @@ interface AddPoiDialogProps {
   editingPoi?: PointOfInterest | null;
 }
 
-// A simple debounce function
-function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+// A simple debounce function with a cancel method
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  delay: number
+): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let timeout: NodeJS.Timeout;
-  return function(this: any, ...args: Parameters<T>) {
+  
+  const debouncedFunc = function(this: any, ...args: Parameters<T>) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), delay);
   };
+
+  debouncedFunc.cancel = () => {
+    clearTimeout(timeout);
+  };
+
+  return debouncedFunc;
 }
 
 export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: AddPoiDialogProps) {
@@ -92,6 +102,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
   }, [name, location, debouncedFetch]);
 
   const handleSelectSuggestion = async (suggestion: any) => {
+    debouncedFetch.cancel(); // Cancel any pending suggestion fetches
     setName(suggestion.description);
     setSuggestions([]);
     setIsFetching(true);
