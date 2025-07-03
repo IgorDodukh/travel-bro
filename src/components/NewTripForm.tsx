@@ -459,7 +459,7 @@ export default function NewTripForm() {
                       value={interestInput}
                       onChange={(e) => setInterestInput(e.target.value)}
                       onKeyDown={handleInterestKeyDown}
-                      className="flex-1 border-none shadow-none focus-visible:ring-0 p-0 h-8 bg-transparent min-w-[120px]"
+                      className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-8 bg-transparent min-w-[120px]"
                       autoComplete="off"
                   />
               </div>
