@@ -93,12 +93,12 @@ export default function NewTripForm() {
         try {
           const storedData: NewTripFormState = JSON.parse(formInputParam);
           setClientFormData({
-            destination: storedData.destination,
-            duration: storedData.duration,
-            accommodation: storedData.accommodation,
-            transport: storedData.transport,
-            interests: storedData.interests,
-            attractionType: storedData.attractionType,
+            destination: storedData.destination || '',
+            duration: storedData.duration || 3,
+            accommodation: storedData.accommodation || '',
+            transport: storedData.transport || '',
+            interests: storedData.interests || [],
+            attractionType: storedData.attractionType || attractionStyleMap[1],
             includeSurroundings: !!storedData.includeSurroundings,
           });
           setIsPreloaded(true);
@@ -123,21 +123,10 @@ export default function NewTripForm() {
         variant: "default",
       });
 
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && state.submittedInput) {
         sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(state.data));
-        // We use the data from the form submission to store in session storage
-        // as it's the definitive source of what was sent to the server.
-        const submittedFormData = new FormData(document.querySelector('form')!);
-        const formInputToStore: NewTripFormState = {
-            destination: submittedFormData.get('destination') as string,
-            duration: parseInt(submittedFormData.get('duration') as string, 10),
-            accommodation: submittedFormData.get('accommodation') as string,
-            transport: submittedFormData.get('transport') as string,
-            interests: (submittedFormData.get('interests') as string).split(','),
-            attractionType: submittedFormData.get('attractionType') as string,
-            includeSurroundings: submittedFormData.get('includeSurroundings') === 'true',
-        };
-        sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInputToStore));
+        // Use the returned input from the action as the single source of truth.
+        sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(state.submittedInput));
       }
 
       router.push(`/new-trip/plans`);
@@ -354,7 +343,6 @@ export default function NewTripForm() {
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     if (currentStep !== totalSteps) {
-        // Prevent submission if not on the final step (e.g., from pressing Enter)
         event.preventDefault();
         return;
     }
@@ -604,5 +592,3 @@ export default function NewTripForm() {
     </Card>
   );
 }
-
-    
