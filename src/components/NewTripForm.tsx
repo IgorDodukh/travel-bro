@@ -73,9 +73,9 @@ export default function NewTripForm() {
   
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
-  const [clientFormData, setClientFormData] = useState({
+  const [clientFormData, setClientFormData] = useState<NewTripFormState>({
     destination: '',
-    duration: '3',
+    duration: 3,
     accommodation: '',
     transport: '',
     interests: [] as string[],
@@ -84,10 +84,6 @@ export default function NewTripForm() {
   });
   const [interestInput, setInterestInput] = useState('');
   const [isPreloaded, setIsPreloaded] = useState(false);
-
-  // Use a ref to get latest form data in the useEffect without adding it as a dependency
-  const clientFormDataRef = useRef(clientFormData);
-  clientFormDataRef.current = clientFormData;
 
   // On mount, check for saved form data in session storage to pre-fill the form
   useEffect(() => {
@@ -98,7 +94,7 @@ export default function NewTripForm() {
           const storedData: NewTripFormState = JSON.parse(formInputParam);
           setClientFormData({
             destination: storedData.destination,
-            duration: String(storedData.duration),
+            duration: storedData.duration,
             accommodation: storedData.accommodation,
             transport: storedData.transport,
             interests: storedData.interests,
@@ -127,19 +123,20 @@ export default function NewTripForm() {
         variant: "default",
       });
 
-      const latestClientFormData = clientFormDataRef.current;
-      const formInputToStore: NewTripFormState = {
-        destination: latestClientFormData.destination,
-        duration: parseInt(latestClientFormData.duration, 10),
-        accommodation: latestClientFormData.accommodation,
-        transport: latestClientFormData.transport,
-        interests: latestClientFormData.interests,
-        attractionType: latestClientFormData.attractionType,
-        includeSurroundings: latestClientFormData.includeSurroundings,
-      };
-
       if (typeof window !== 'undefined') {
         sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(state.data));
+        // We use the data from the form submission to store in session storage
+        // as it's the definitive source of what was sent to the server.
+        const submittedFormData = new FormData(document.querySelector('form')!);
+        const formInputToStore: NewTripFormState = {
+            destination: submittedFormData.get('destination') as string,
+            duration: parseInt(submittedFormData.get('duration') as string, 10),
+            accommodation: submittedFormData.get('accommodation') as string,
+            transport: submittedFormData.get('transport') as string,
+            interests: (submittedFormData.get('interests') as string).split(','),
+            attractionType: submittedFormData.get('attractionType') as string,
+            includeSurroundings: submittedFormData.get('includeSurroundings') === 'true',
+        };
         sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInputToStore));
       }
 
@@ -204,7 +201,8 @@ export default function NewTripForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setClientFormData(prev => ({ ...prev, [name]: value }));
+    const valueToSet = name === 'duration' ? parseInt(value, 10) || 0 : value;
+    setClientFormData(prev => ({ ...prev, [name]: valueToSet }));
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -275,6 +273,12 @@ export default function NewTripForm() {
   };
 
   const validateStep = (step: number) => {
+    // Create a version of the form data with the duration as a string for validation
+    const validationData = {
+        ...clientFormData,
+        duration: String(clientFormData.duration),
+    };
+
     let fieldsToValidate: (keyof z.infer<typeof clientSchema>)[] = [];
     if (step === 1) {
       fieldsToValidate = ['destination', 'duration'];
@@ -287,8 +291,8 @@ export default function NewTripForm() {
     const stepSchema = clientSchema.pick(
       fieldsToValidate.reduce((acc, field) => ({ ...acc, [field]: true }), {})
     );
-
-    const result = stepSchema.safeParse(clientFormData);
+    
+    const result = stepSchema.safeParse(validationData);
 
     if (!result.success) {
       setErrors(prev => ({ ...prev, ...result.error.flatten().fieldErrors }));
@@ -325,7 +329,7 @@ export default function NewTripForm() {
   const handleResetForm = () => {
     setClientFormData({
       destination: '',
-      duration: '3',
+      duration: 3,
       accommodation: '',
       transport: '',
       interests: [],
@@ -348,25 +352,26 @@ export default function NewTripForm() {
     });
   };
 
-  const handleFormSubmit = () => {
-    const result = clientSchema.safeParse(clientFormData);
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    if (currentStep !== totalSteps) {
+        // Prevent submission if not on the final step (e.g., from pressing Enter)
+        event.preventDefault();
+        return;
+    }
+
+    const validationData = {
+      ...clientFormData,
+      duration: String(clientFormData.duration),
+    };
+    const result = clientSchema.safeParse(validationData);
     if (!result.success) {
+      event.preventDefault();
       setErrors(result.error.flatten().fieldErrors);
       return; 
     }
     
     setErrors({});
-
-    const formData = new FormData();
-    formData.append('destination', clientFormData.destination);
-    formData.append('duration', clientFormData.duration);
-    formData.append('accommodation', clientFormData.accommodation);
-    formData.append('transport', clientFormData.transport);
-    formData.append('interests', clientFormData.interests.join(','));
-    formData.append('attractionType', clientFormData.attractionType);
-    formData.append('includeSurroundings', String(clientFormData.includeSurroundings));
-
-    formAction(formData);
+    // Allow form submission to proceed via its action prop
   };
 
   return (
@@ -377,7 +382,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form noValidate>
+      <form action={formAction} onSubmit={handleFormSubmit} noValidate>
         <CardContent className="space-y-6">
           {isPreloaded && (
             <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
@@ -463,7 +468,7 @@ export default function NewTripForm() {
 
             <div>
               <Label htmlFor="duration">How many days?</Label>
-              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={clientFormData.duration} onChange={handleInputChange} />
+              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={String(clientFormData.duration)} onChange={handleInputChange} />
               {errors?.duration && <p className="text-sm text-destructive mt-1">{errors.duration[0]}</p>}
             </div>
           </div>
@@ -555,7 +560,7 @@ export default function NewTripForm() {
           </div>
           
           <input type="hidden" name="destination" value={clientFormData.destination} />
-          <input type="hidden" name="duration" value={clientFormData.duration} />
+          <input type="hidden" name="duration" value={String(clientFormData.duration)} />
           <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />
           <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
           <input type="hidden" name="transport" value={clientFormData.transport} />
@@ -585,11 +590,11 @@ export default function NewTripForm() {
             </Button>
           ) : <div />}
           {currentStep < totalSteps ? (
-            <Button type="button" onClick={nextStep} className="ml-auto">
+            <Button type="button" onClick={nextStep}>
               Next
             </Button>
           ) : (
-            <Button type="button" onClick={handleFormSubmit} disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
+            <Button type="submit" disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans
             </Button>
@@ -599,3 +604,5 @@ export default function NewTripForm() {
     </Card>
   );
 }
+
+    
