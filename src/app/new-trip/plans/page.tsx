@@ -2,23 +2,30 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import GeneratedPlanCard from '@/components/GeneratedPlanCard';
 import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
 export default function GeneratedPlansPage() {
   const router = useRouter();
+  const { toast } = useToast();
+  
   const [generatedPlansOutput, setGeneratedPlansOutput] = useState<GenerateTravelPlansOutput | null>(null);
   const [formInput, setFormInput] = useState<NewTripFormState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // For regeneration action
+  const [regenerationState, regenerateAction, isRegenerating] = useActionState<NewTripFormActionState | null, FormData>(handleGeneratePlansAction, null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -44,12 +51,60 @@ export default function GeneratedPlansPage() {
     setIsLoading(false);
   }, []);
 
+  // Handle the result of the regeneration action
+  useEffect(() => {
+    if (!regenerationState) return;
+
+    if (regenerationState.success && regenerationState.data) {
+      setGeneratedPlansOutput(regenerationState.data);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(regenerationState.data));
+      }
+      window.scrollTo(0, 0); // Scroll to top to see new plans
+      toast({
+        title: "New Plans Generated!",
+        description: "We've crafted a new set of adventures for you.",
+      });
+    } else if (!regenerationState.success && regenerationState.message) {
+      toast({
+        title: "Regeneration Failed",
+        description: regenerationState.message,
+        variant: "destructive",
+      });
+      // Optionally set an error state to show in the UI as well
+      setError(regenerationState.message);
+    }
+  }, [regenerationState, toast]);
+
   const handleBackToPreferences = () => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
       sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
     }
     router.push('/new-trip');
+  };
+
+  const handleRegenerate = () => {
+    if (!formInput) {
+      toast({
+        title: "Error",
+        description: "Cannot regenerate plans, the original preferences are missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setError(null); // Clear previous errors shown in the UI
+
+    const formData = new FormData();
+    formData.append('destination', formInput.destination);
+    formData.append('duration', String(formInput.duration));
+    formData.append('accommodation', formInput.accommodation);
+    formData.append('transport', formInput.transport);
+    formData.append('interests', formInput.interests.join(','));
+    formData.append('attractionType', formInput.attractionType);
+    formData.append('includeSurroundings', String(formInput.includeSurroundings || false));
+    
+    regenerateAction(formData);
   };
 
   if (isLoading) {
@@ -81,7 +136,7 @@ export default function GeneratedPlansPage() {
     );
   }
 
-  if (error) {
+  if (error && !isRegenerating) {
     return (
       <div className="text-center py-10">
         <h2 className="text-2xl font-semibold text-destructive mb-4">Oops! Something went wrong.</h2>
@@ -118,10 +173,18 @@ export default function GeneratedPlansPage() {
         ))}
       </div>
 
-      <div className="text-center mt-12">
-        <Button variant="outline" onClick={handleBackToPreferences}>
+      <div className="text-center mt-12 flex flex-wrap justify-center gap-4">
+        <Button variant="outline" onClick={handleBackToPreferences} disabled={isRegenerating}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Preferences
+        </Button>
+        <Button onClick={handleRegenerate} disabled={isRegenerating}>
+          {isRegenerating ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="mr-2 h-4 w-4" />
+          )}
+          Generate Again
         </Button>
       </div>
     </div>
