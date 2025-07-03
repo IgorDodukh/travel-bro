@@ -342,24 +342,27 @@ export default function NewTripForm() {
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (currentStep !== totalSteps) {
-        event.preventDefault();
-        return;
-    }
+    // This is now the single point of truth for submission.
+    // We prevent default to stop the browser's default form submission.
+    event.preventDefault();
 
+    // Validate the final step's data.
     const validationData = {
       ...clientFormData,
       duration: String(clientFormData.duration),
     };
     const result = clientSchema.safeParse(validationData);
     if (!result.success) {
-      event.preventDefault();
       setErrors(result.error.flatten().fieldErrors);
       return; 
     }
     
+    // Clear errors and manually call the formAction.
     setErrors({});
-    // Allow form submission to proceed via its action prop
+    
+    // Create FormData and pass it to the action
+    const formData = new FormData(event.currentTarget);
+    formAction(formData);
   };
 
   return (
@@ -370,7 +373,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form action={formAction} onSubmit={handleFormSubmit} noValidate>
+      <form onSubmit={handleFormSubmit} noValidate>
         <CardContent className="space-y-6">
           {isPreloaded && (
             <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
@@ -465,7 +468,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Accommodation & Transport</h3>
             <div>
               <Label htmlFor="accommodation">Preferred Accommodation</Label>
-              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation}>
+              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation || undefined}>
                 <SelectTrigger><SelectValue placeholder="Select accommodation type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Hotel">Hotel</SelectItem>
@@ -479,7 +482,7 @@ export default function NewTripForm() {
             </div>
             <div>
               <Label htmlFor="transport">Preferred Transport</Label>
-              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport}>
+              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport || undefined}>
                 <SelectTrigger><SelectValue placeholder="Select transport type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Car">Rental Car / Own Car</SelectItem>
@@ -497,7 +500,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent focus-within:ring-0">
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent">
                   {clientFormData.interests.map((interest) => (
                       <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
