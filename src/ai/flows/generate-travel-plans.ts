@@ -157,6 +157,7 @@ CRITICAL RULES:
 {{#if includeSurroundings}}
 - Include noteworthy attractions in the surrounding areas, up to 200km away.
 {{/if}}
+- All locations MUST be grouped by days based on their position to each other. Group close locations into one day and order them by distance from each other to make a smooth journey but don't forget to split all journey into {{{duration}}} days.
 
 For each plan, provide:
 1. planName: A descriptive name
