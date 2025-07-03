@@ -57,10 +57,14 @@ export default function GeneratedPlansPage() {
 
     if (regenerationState.success && regenerationState.data) {
       setGeneratedPlansOutput(regenerationState.data);
-      if (typeof window !== 'undefined' && formInput) {
+      if (typeof window !== 'undefined' && regenerationState.submittedInput) {
+        // Use the returned input from the action as the single source of truth
+        const confirmedInput = regenerationState.submittedInput;
         sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(regenerationState.data));
-        // Persist the form input used for this regeneration to session storage
-        sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(formInput));
+        // Persist the confirmed form input used for this regeneration to session storage
+        sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(confirmedInput));
+        // Also update the local state for any subsequent regenerations on this page
+        setFormInput(confirmedInput);
       }
       window.scrollTo(0, 0); // Scroll to top to see new plans
       toast({
@@ -76,7 +80,7 @@ export default function GeneratedPlansPage() {
       // Optionally set an error state to show in the UI as well
       setError(regenerationState.message);
     }
-  }, [regenerationState, toast, formInput]);
+  }, [regenerationState, toast]);
 
   const handleBackToPreferences = () => {
     // Just navigate back. The form component will now handle loading the data.

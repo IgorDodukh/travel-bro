@@ -19,6 +19,7 @@ export type NewTripFormActionState = {
   errors?: z.ZodError<GenerateTravelPlansInput>['formErrors']['fieldErrors'];
   data?: GenerateTravelPlansOutput;
   success: boolean;
+  submittedInput?: GenerateTravelPlansInput; // Add the input to the state
 };
 
 
@@ -52,10 +53,19 @@ export async function handleGeneratePlansAction(
     const generatedPlans = await generateTravelPlans(aiInput);
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {
-      return { message: "Could not generate travel plans. Please try adjusting your preferences.", success: false };
+      return { 
+        message: "Could not generate travel plans. Please try adjusting your preferences.", 
+        success: false,
+        submittedInput: aiInput
+      };
     }
     
-    return { message: "Travel plans generated successfully!", data: generatedPlans, success: true };
+    return { 
+        message: "Travel plans generated successfully!", 
+        data: generatedPlans, 
+        success: true,
+        submittedInput: aiInput
+    };
 
   } catch (error) {
     console.error("Error generating travel plans:", error);
