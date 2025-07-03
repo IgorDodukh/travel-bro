@@ -91,7 +91,7 @@ export default function NewTripForm() {
   useEffect(() => {
     // This effect now ONLY handles the result of the form action
     // It does not depend on clientFormData, preventing re-runs on every keystroke
-    if (!state || !state.message) {
+    if (isPending || !state || !state.message) {
       return;
     }
 
@@ -140,7 +140,7 @@ export default function NewTripForm() {
         variant: "destructive",
       });
     }
-  }, [state, router, toast]);
+  }, [state, isPending, router, toast]);
 
   const fetchDestinationSuggestions = useCallback(async (query: string) => {
     if (query.length < 2) {
@@ -310,6 +310,7 @@ export default function NewTripForm() {
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
       <form
+        action={formAction}
         onSubmit={(e) => {
           if (currentStep !== totalSteps) {
             e.preventDefault();
@@ -322,7 +323,6 @@ export default function NewTripForm() {
           } else {
             // Clear errors on successful validation before submission
             setErrors({});
-            formAction(e.currentTarget as unknown as FormData);
           }
         }}
         noValidate
@@ -439,7 +439,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent">
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent focus-within:ring-0">
                   {clientFormData.interests.map((interest) => (
                       <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
