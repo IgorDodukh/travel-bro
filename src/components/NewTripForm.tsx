@@ -83,14 +83,39 @@ export default function NewTripForm() {
     includeSurroundings: false,
   });
   const [interestInput, setInterestInput] = useState('');
+  const [isPreloaded, setIsPreloaded] = useState(false);
 
   // Use a ref to get latest form data in the useEffect without adding it as a dependency
   const clientFormDataRef = useRef(clientFormData);
   clientFormDataRef.current = clientFormData;
 
+  // On mount, check for saved form data in session storage to pre-fill the form
   useEffect(() => {
-    // This effect now ONLY handles the result of the form action
-    // It does not depend on clientFormData, preventing re-runs on every keystroke
+    if (typeof window !== 'undefined') {
+      const formInputParam = sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
+      if (formInputParam) {
+        try {
+          const storedData: NewTripFormState = JSON.parse(formInputParam);
+          setClientFormData({
+            destination: storedData.destination,
+            duration: String(storedData.duration),
+            accommodation: storedData.accommodation,
+            transport: storedData.transport,
+            interests: storedData.interests,
+            attractionType: storedData.attractionType,
+            includeSurroundings: !!storedData.includeSurroundings,
+          });
+          setIsPreloaded(true);
+        } catch (e) {
+          console.error("Failed to parse form data from session storage", e);
+          sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
+          sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
+        }
+      }
+    }
+  }, []); // Empty array ensures this runs only once on mount
+
+  useEffect(() => {
     if (isPending || !state || !state.message) {
       return;
     }
@@ -121,7 +146,6 @@ export default function NewTripForm() {
       router.push(`/new-trip/plans`);
     } else if (!state.success && state.errors) {
       setErrors(state.errors);
-      // Find the first field with an error and navigate to its step
       const errorFields = Object.keys(state.errors);
       if (errorFields.length > 0) {
         const firstErrorField = errorFields[0];
@@ -271,7 +295,6 @@ export default function NewTripForm() {
       return false;
     }
 
-    // On success, clear errors for the validated fields
     setErrors(prev => {
       const newErrors = { ...prev };
       for (const field of fieldsToValidate) {
@@ -286,7 +309,6 @@ export default function NewTripForm() {
   const nextStep = () => {
     if (validateStep(currentStep)) {
       if (currentStep === 2) {
-        // When moving from step 2 to 3, clear any lingering errors for step 3 fields
         setErrors(prev => {
           const newErrors = { ...prev };
           delete newErrors.interests;
@@ -300,6 +322,31 @@ export default function NewTripForm() {
   
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
   
+  const handleResetForm = () => {
+    setClientFormData({
+      destination: '',
+      duration: '3',
+      accommodation: '',
+      transport: '',
+      interests: [],
+      attractionType: attractionStyleMap[1],
+      includeSurroundings: false,
+    });
+    setInterestInput('');
+    setErrors({});
+    setCurrentStep(1);
+    setIsPreloaded(false);
+
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
+    }
+
+    toast({
+      title: "Form Cleared",
+      description: "You can now start planning a new trip from scratch.",
+    });
+  };
 
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -321,13 +368,26 @@ export default function NewTripForm() {
             e.preventDefault();
             setErrors(result.error.flatten().fieldErrors);
           } else {
-            // Clear errors on successful validation before submission
             setErrors({});
           }
         }}
         noValidate
       >
         <CardContent className="space-y-6">
+          {isPreloaded && (
+            <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
+              <div>
+                <AlertTitle className="font-semibold">Editing Preferences</AlertTitle>
+                <AlertDescription>
+                  Your previous choices are loaded. Make changes and generate again.
+                </AlertDescription>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleResetForm}>
+                Start Over
+              </Button>
+            </Alert>
+          )}
+
           <div style={{ display: currentStep === 1 ? 'block' : 'none' }} className="space-y-4 animate-fadeIn">
             <h3 className="text-xl font-semibold mb-2">Destination & Duration</h3>
             <div>
@@ -489,7 +549,6 @@ export default function NewTripForm() {
             </div>
           </div>
           
-          {/* Add hidden inputs to hold values from custom components for form submission */}
           <input type="hidden" name="destination" value={clientFormData.destination} />
           <input type="hidden" name="duration" value={clientFormData.duration} />
           <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />

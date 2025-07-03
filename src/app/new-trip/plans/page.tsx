@@ -77,10 +77,7 @@ export default function GeneratedPlansPage() {
   }, [regenerationState, toast]);
 
   const handleBackToPreferences = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
-      sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
-    }
+    // Just navigate back. The form component will now handle loading the data.
     router.push('/new-trip');
   };
 
