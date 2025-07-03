@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -8,6 +9,9 @@ import type { TravelPlan } from '@/lib/types';
 import { getSavedTravelPlans } from '@/lib/localStorageUtils';
 import { PlusCircle } from 'lucide-react';
 
+const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
+const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
+
 export default function HomePage() {
   const [savedPlans, setSavedPlans] = useState<TravelPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,6 +20,13 @@ export default function HomePage() {
     setSavedPlans(getSavedTravelPlans());
     setIsLoading(false);
   }, []);
+
+  const handlePlanNewTripClick = () => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,7 +64,7 @@ export default function HomePage() {
       )}
       
       <div className="fixed bottom-8 right-8 md:static md:mt-12 md:flex md:justify-center">
-        <Button asChild size="lg" className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
+        <Button asChild size="lg" className="shadow-xl hover:shadow-2xl transition-shadow duration-300" onClick={handlePlanNewTripClick}>
           <Link href="/new-trip" className="flex items-center gap-2">
             <PlusCircle className="w-6 h-6" />
             Plan New Trip
