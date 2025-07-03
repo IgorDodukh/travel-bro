@@ -34,7 +34,7 @@ const clientSchema = z.object({
   accommodation: z.string().min(1, { message: "Accommodation type is required" }),
   transport: z.string().min(1, { message: "Transport type is required" }),
   interests: z.array(z.string()).min(1, { message: "At least one interest is required" }),
-  attractionType: z.string().min(1, { message: "Attraction style is required" }),
+  attractionType: z.string().min(1, { message: "Attraction type is required" }),
 });
 
 const attractionStyleMap = [
@@ -310,7 +310,6 @@ export default function NewTripForm() {
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
       <form
-        action={formAction}
         onSubmit={(e) => {
           if (currentStep !== totalSteps) {
             e.preventDefault();
@@ -320,6 +319,10 @@ export default function NewTripForm() {
           if (!result.success) {
             e.preventDefault();
             setErrors(result.error.flatten().fieldErrors);
+          } else {
+            // Clear errors on successful validation before submission
+            setErrors({});
+            formAction(e.currentTarget as unknown as FormData);
           }
         }}
         noValidate
@@ -436,7 +439,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent has-[:focus]:ring-2 has-[:focus]:ring-ring has-[:focus]:ring-offset-0">
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent">
                   {clientFormData.interests.map((interest) => (
                       <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
@@ -487,6 +490,8 @@ export default function NewTripForm() {
           </div>
           
           {/* Add hidden inputs to hold values from custom components for form submission */}
+          <input type="hidden" name="destination" value={clientFormData.destination} />
+          <input type="hidden" name="duration" value={clientFormData.duration} />
           <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />
           <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
           <input type="hidden" name="transport" value={clientFormData.transport} />
