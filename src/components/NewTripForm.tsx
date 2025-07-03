@@ -348,6 +348,27 @@ export default function NewTripForm() {
     });
   };
 
+  const handleFormSubmit = () => {
+    const result = clientSchema.safeParse(clientFormData);
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return; 
+    }
+    
+    setErrors({});
+
+    const formData = new FormData();
+    formData.append('destination', clientFormData.destination);
+    formData.append('duration', clientFormData.duration);
+    formData.append('accommodation', clientFormData.accommodation);
+    formData.append('transport', clientFormData.transport);
+    formData.append('interests', clientFormData.interests.join(','));
+    formData.append('attractionType', clientFormData.attractionType);
+    formData.append('includeSurroundings', String(clientFormData.includeSurroundings));
+
+    formAction(formData);
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
@@ -356,23 +377,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form
-        action={formAction}
-        onSubmit={(e) => {
-          if (currentStep !== totalSteps) {
-            e.preventDefault();
-            return;
-          }
-          const result = clientSchema.safeParse(clientFormData);
-          if (!result.success) {
-            e.preventDefault();
-            setErrors(result.error.flatten().fieldErrors);
-          } else {
-            setErrors({});
-          }
-        }}
-        noValidate
-      >
+      <form noValidate>
         <CardContent className="space-y-6">
           {isPreloaded && (
             <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
@@ -382,7 +387,7 @@ export default function NewTripForm() {
                   Your previous choices are loaded. Make changes and generate again.
                 </AlertDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={handleResetForm}>
+              <Button type="button" variant="outline" size="sm" onClick={handleResetForm}>
                 Start Over
               </Button>
             </Alert>
@@ -584,7 +589,7 @@ export default function NewTripForm() {
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
+            <Button type="button" onClick={handleFormSubmit} disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans
             </Button>
