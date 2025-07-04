@@ -260,7 +260,6 @@ export default function NewTripForm() {
   };
 
   const validateStep = (step: number) => {
-    // Create a version of the form data with the duration as a string for validation
     const validationData = {
         ...clientFormData,
         duration: String(clientFormData.duration),
@@ -299,14 +298,6 @@ export default function NewTripForm() {
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
-      if (currentStep === 2) {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.interests;
-          delete newErrors.attractionType;
-          return newErrors;
-        });
-      }
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     }
   };
@@ -331,23 +322,42 @@ export default function NewTripForm() {
     });
   };
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    if (currentStep !== totalSteps) {
-      event.preventDefault();
-      return;
-    }
+  const handleGenerateClick = () => {
     const validationData = {
       ...clientFormData,
       duration: String(clientFormData.duration),
     };
     const result = clientSchema.safeParse(validationData);
+
     if (!result.success) {
-      event.preventDefault();
       setErrors(result.error.flatten().fieldErrors);
-      return; 
+      toast({
+        title: "Validation Failed",
+        description: "Please check all steps for errors.",
+        variant: "destructive"
+      });
+      const errorFields = Object.keys(result.error.flatten().fieldErrors);
+      if (errorFields.length > 0) {
+        const firstErrorField = errorFields[0];
+        if (['destination', 'duration', 'includeSurroundings'].includes(firstErrorField)) setCurrentStep(1);
+        else if (['accommodation', 'transport'].includes(firstErrorField)) setCurrentStep(2);
+        else setCurrentStep(3);
+      }
+      return;
     }
-    
+
     setErrors({});
+
+    const formData = new FormData();
+    formData.append('destination', clientFormData.destination);
+    formData.append('duration', String(clientFormData.duration));
+    formData.append('accommodation', clientFormData.accommodation);
+    formData.append('transport', clientFormData.transport);
+    formData.append('interests', clientFormData.interests.join(','));
+    formData.append('attractionType', clientFormData.attractionType);
+    formData.append('includeSurroundings', String(clientFormData.includeSurroundings || false));
+
+    formAction(formData);
   };
 
   return (
@@ -358,7 +368,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form action={formAction} onSubmit={handleFormSubmit} noValidate>
+      <form noValidate>
         <CardContent className="space-y-6">
           {isPreloaded && (
             <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
@@ -486,7 +496,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent">
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                   {clientFormData.interests.map((interest) => (
                       <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
@@ -539,9 +549,11 @@ export default function NewTripForm() {
           
           <input type="hidden" name="destination" value={clientFormData.destination} />
           <input type="hidden" name="duration" value={String(clientFormData.duration)} />
+          <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
+          <input type="hidden" name="transport" value={clientFormData.transport} />
           <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />
+          <input type="hidden" name="attractionType" value={clientFormData.attractionType} />
           <input type="hidden" name="includeSurroundings" value={String(clientFormData.includeSurroundings)} />
-          {/* We no longer need hidden inputs for select because they are now part of the form with name attributes */}
 
 
           {state?.message && !state.success && !state.errors && (
@@ -571,7 +583,7 @@ export default function NewTripForm() {
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
+            <Button type="button" onClick={handleGenerateClick} disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans
             </Button>
@@ -581,3 +593,5 @@ export default function NewTripForm() {
     </Card>
   );
 }
+
+    
