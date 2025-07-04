@@ -20,7 +20,7 @@ import { Switch } from './ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 
-const initialFormState: NewTripFormActionState = { success: false };
+const initialFormActionState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
@@ -63,53 +63,52 @@ function debounce<T extends (...args: any[]) => any>(
   return debouncedFunc;
 }
 
+const defaultFormState: NewTripFormState = {
+  destination: '',
+  duration: 3,
+  accommodation: '',
+  transport: '',
+  interests: [],
+  attractionType: attractionStyleMap[1],
+  includeSurroundings: false,
+};
+
+// Lazy initializer function to get state from sessionStorage on first render
+const getInitialState = (): NewTripFormState => {
+  if (typeof window === 'undefined') {
+    return defaultFormState;
+  }
+  const savedData = sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
+  if (savedData) {
+    try {
+      const parsedData = JSON.parse(savedData);
+      // Ensure all fields from default state are present
+      return { ...defaultFormState, ...parsedData };
+    } catch (e) {
+      console.error("Failed to parse form data from session storage", e);
+      return defaultFormState;
+    }
+  }
+  return defaultFormState;
+};
+
 export default function NewTripForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   const router = useRouter();
   const { toast } = useToast();
   
-  const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormState);
+  const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormActionState);
   
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
-  const [clientFormData, setClientFormData] = useState<NewTripFormState>({
-    destination: '',
-    duration: 3,
-    accommodation: '',
-    transport: '',
-    interests: [] as string[],
-    attractionType: attractionStyleMap[1],
-    includeSurroundings: false,
-  });
+  const [clientFormData, setClientFormData] = useState<NewTripFormState>(getInitialState);
   const [interestInput, setInterestInput] = useState('');
-  const [isPreloaded, setIsPreloaded] = useState(false);
-
-  // On mount, check for saved form data in session storage to pre-fill the form
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const formInputParam = sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
-      if (formInputParam) {
-        try {
-          const storedData: NewTripFormState = JSON.parse(formInputParam);
-          setClientFormData({
-            destination: storedData.destination || '',
-            duration: storedData.duration || 3,
-            accommodation: storedData.accommodation || '',
-            transport: storedData.transport || '',
-            interests: storedData.interests || [],
-            attractionType: storedData.attractionType || attractionStyleMap[1],
-            includeSurroundings: !!storedData.includeSurroundings,
-          });
-          setIsPreloaded(true);
-        } catch (e) {
-          console.error("Failed to parse form data from session storage", e);
-          sessionStorage.removeItem(SESSION_STORAGE_FORM_INPUT_KEY);
-          sessionStorage.removeItem(SESSION_STORAGE_GENERATED_PLANS_KEY);
-        }
-      }
-    }
-  }, []); // Empty array ensures this runs only once on mount
+  
+  const [isPreloaded, setIsPreloaded] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
+  });
 
   useEffect(() => {
     if (isPending || !state || !state.message) {
@@ -125,7 +124,6 @@ export default function NewTripForm() {
 
       if (typeof window !== 'undefined' && state.submittedInput) {
         sessionStorage.setItem(SESSION_STORAGE_GENERATED_PLANS_KEY, JSON.stringify(state.data));
-        // Use the returned input from the action as the single source of truth.
         sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(state.submittedInput));
       }
 
@@ -316,15 +314,7 @@ export default function NewTripForm() {
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
   
   const handleResetForm = () => {
-    setClientFormData({
-      destination: '',
-      duration: 3,
-      accommodation: '',
-      transport: '',
-      interests: [],
-      attractionType: attractionStyleMap[1],
-      includeSurroundings: false,
-    });
+    setClientFormData(defaultFormState);
     setInterestInput('');
     setErrors({});
     setCurrentStep(1);
@@ -342,27 +332,22 @@ export default function NewTripForm() {
   };
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    // This is now the single point of truth for submission.
-    // We prevent default to stop the browser's default form submission.
-    event.preventDefault();
-
-    // Validate the final step's data.
+    if (currentStep !== totalSteps) {
+      event.preventDefault();
+      return;
+    }
     const validationData = {
       ...clientFormData,
       duration: String(clientFormData.duration),
     };
     const result = clientSchema.safeParse(validationData);
     if (!result.success) {
+      event.preventDefault();
       setErrors(result.error.flatten().fieldErrors);
       return; 
     }
     
-    // Clear errors and manually call the formAction.
     setErrors({});
-    
-    // Create FormData and pass it to the action
-    const formData = new FormData(event.currentTarget);
-    formAction(formData);
   };
 
   return (
@@ -373,7 +358,7 @@ export default function NewTripForm() {
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
       </CardHeader>
-      <form onSubmit={handleFormSubmit} noValidate>
+      <form action={formAction} onSubmit={handleFormSubmit} noValidate>
         <CardContent className="space-y-6">
           {isPreloaded && (
             <Alert variant="default" className="flex items-center justify-between animate-fadeIn">
@@ -441,6 +426,7 @@ export default function NewTripForm() {
             <div className="flex items-center space-x-3 pt-2">
               <Switch
                 id="includeSurroundings"
+                name="includeSurroundings"
                 checked={clientFormData.includeSurroundings}
                 onCheckedChange={handleSwitchChange}
               />
@@ -468,7 +454,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Accommodation & Transport</h3>
             <div>
               <Label htmlFor="accommodation">Preferred Accommodation</Label>
-              <Select onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation || undefined}>
+              <Select name="accommodation" onValueChange={(value) => handleSelectChange('accommodation', value)} value={clientFormData.accommodation || undefined}>
                 <SelectTrigger><SelectValue placeholder="Select accommodation type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Hotel">Hotel</SelectItem>
@@ -482,7 +468,7 @@ export default function NewTripForm() {
             </div>
             <div>
               <Label htmlFor="transport">Preferred Transport</Label>
-              <Select onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport || undefined}>
+              <Select name="transport" onValueChange={(value) => handleSelectChange('transport', value)} value={clientFormData.transport || undefined}>
                 <SelectTrigger><SelectValue placeholder="Select transport type" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Car">Rental Car / Own Car</SelectItem>
@@ -532,6 +518,7 @@ export default function NewTripForm() {
               <div className="pt-4">
                 <Slider
                   id="attractionType"
+                  name="attractionType"
                   min={0}
                   max={3}
                   step={1}
@@ -553,10 +540,9 @@ export default function NewTripForm() {
           <input type="hidden" name="destination" value={clientFormData.destination} />
           <input type="hidden" name="duration" value={String(clientFormData.duration)} />
           <input type="hidden" name="interests" value={clientFormData.interests.join(',')} />
-          <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
-          <input type="hidden" name="transport" value={clientFormData.transport} />
-          <input type="hidden" name="attractionType" value={clientFormData.attractionType} />
           <input type="hidden" name="includeSurroundings" value={String(clientFormData.includeSurroundings)} />
+          {/* We no longer need hidden inputs for select because they are now part of the form with name attributes */}
+
 
           {state?.message && !state.success && !state.errors && (
             <Alert variant="destructive" className="mt-4">
