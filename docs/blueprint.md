@@ -1,4 +1,4 @@
-# **App Name**: PlanKapkan
+# **App Name**: MIARA Planner - the most intelligent and advanced tRavel assistant
 
 ## Core Features:
 

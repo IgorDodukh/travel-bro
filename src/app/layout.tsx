@@ -6,8 +6,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export const metadata: Metadata = {
-  title: 'PlanKapkan - Your Personal Travel Planner',
-  description: 'Plan your next adventure with PlanKapkan, generating personalized travel itineraries.',
+  title: 'MIARA Planner - Your Personal Travel Assistant',
+  description: 'Plan your next adventure with MIARA Planner, generating personalized travel itineraries.',
 };
 
 export default function RootLayout({

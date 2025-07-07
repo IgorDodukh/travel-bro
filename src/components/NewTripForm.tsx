@@ -39,9 +39,9 @@ const clientSchema = z.object({
 
 const attractionStyleMap = [
   "Typical Tourist Locations",
-  "Mix of typical tourist locations and some unique local places",
+  "Mix of Typical and Unique Places",
   "Unique Local Spots",
-  "Off-the-beaten Path, very unique untypical places to visit",
+  "Extremely Unique Locations",
 ];
 
 // A simple debounce function with a cancel method

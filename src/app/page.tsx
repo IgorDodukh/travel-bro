@@ -39,7 +39,7 @@ export default function HomePage() {
   return (
     <div className="space-y-8">
       <section className="text-center">
-        <h2 className="text-3xl font-bold font-headline mb-4 text-primary">Welcome to PlanKapkan!</h2>
+        <h2 className="text-3xl font-bold font-headline mb-4 text-primary">Welcome to MIARA Planner!</h2>
         <p className="text-lg text-muted-foreground mb-8">
           Your personalized travel planner. Let's craft your next unforgettable journey.
         </p>
