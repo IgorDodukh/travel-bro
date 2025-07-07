@@ -424,7 +424,7 @@ export default function NewTripForm() {
                           {destinationSuggestions.map((suggestion) => (
                               <li
                                   key={suggestion.place_id}
-                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
                                   onMouseDown={() => handleSelectDestination(suggestion)}
                               >
                                   <MapPin className="h-4 w-4 text-muted-foreground" />
