@@ -327,6 +327,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
         onClose={() => { setIsAddPoiDialogOpen(false); setEditingPoi(null); }}
         onAddPoi={handleAddOrUpdatePoi}
         editingPoi={editingPoi}
+        destination={plan.destination}
       />
       <SavePlanDialog
         isOpen={isSavePlanDialogOpen}

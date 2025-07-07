@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ interface AddPoiDialogProps {
   onClose: () => void;
   onAddPoi: (poi: Omit<PointOfInterest, 'id' | 'type' | 'dayIndex'>) => void;
   editingPoi?: PointOfInterest | null;
+  destination: string;
 }
 
 // A simple debounce function with a cancel method
@@ -35,7 +36,7 @@ function debounce<T extends (...args: any[]) => any>(
   return debouncedFunc;
 }
 
-export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: AddPoiDialogProps) {
+export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi, destination }: AddPoiDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState<string | null>(null);
@@ -80,7 +81,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
     }
     setIsFetching(true);
     try {
-      const response = await fetch(`/api/places-autocomplete?input=${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/places-autocomplete?input=${encodeURIComponent(query)}&destination=${encodeURIComponent(destination)}`);
       if (!response.ok) throw new Error('Network response was not ok');
       const data = await response.json();
       setSuggestions(data.predictions || []);
@@ -90,9 +91,9 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
     } finally {
       setIsFetching(false);
     }
-  }, []);
+  }, [destination]);
 
-  const debouncedFetch = useRef(debounce(fetchSuggestions, 300)).current;
+  const debouncedFetch = useMemo(() => debounce(fetchSuggestions, 300), [fetchSuggestions]);
 
   useEffect(() => {
     // We only fetch suggestions if the user is typing, a final location has NOT been selected,
@@ -103,6 +104,10 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
         // In all other cases (e.g., after selection, on clear), cancel pending fetches and clear suggestions.
         debouncedFetch.cancel();
         setSuggestions([]);
+    }
+
+    return () => {
+      debouncedFetch.cancel();
     }
   }, [name, location, isSelectionInProgress, debouncedFetch]);
 
@@ -181,7 +186,7 @@ export default function AddPoiDialog({ isOpen, onClose, onAddPoi, editingPoi }: 
                           {suggestions.map((suggestion) => (
                               <li
                                   key={suggestion.place_id}
-                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent"
+                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
                                   onClick={() => handleSelectSuggestion(suggestion)}
                               >
                                   <MapPin className="h-4 w-4 text-muted-foreground" />
