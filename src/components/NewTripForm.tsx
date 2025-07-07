@@ -459,7 +459,9 @@ export default function NewTripForm() {
 
             <div>
               <Label htmlFor="duration">How many days?</Label>
-              <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={String(clientFormData.duration)} onChange={handleInputChange} />
+              <div className="max-w-[120px]">
+                <Input id="duration" name="duration" type="number" min="1" placeholder="e.g., 7" value={String(clientFormData.duration)} onChange={handleInputChange} />
+              </div>
               {errors?.duration && <p className="text-sm text-destructive mt-1">{errors.duration[0]}</p>}
             </div>
           </div>
@@ -502,7 +504,7 @@ export default function NewTripForm() {
               <Label htmlFor="interests">Your Interests</Label>
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-transparent bg-input p-2 min-h-[48px]">
                   {clientFormData.interests.map((interest) => (
-                      <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
+                      <Badge key={interest} variant="default" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
                           <button
                               type="button"

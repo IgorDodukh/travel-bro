@@ -61,11 +61,11 @@ body {
     --accent: 176 70% 62%; /* #4be2d8 */
     --accent-foreground: 0 0% 5%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 20%; /* #333333 */
-    --input: 0 0% 20%; /* #333333 */
+    --input: 0 0% 15%; /* #262626 */
     --ring: 75 96% 59%;
     
     --chart-1: 220 70% 50%;
