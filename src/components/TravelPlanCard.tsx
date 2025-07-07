@@ -10,7 +10,7 @@ interface TravelPlanCardProps {
 
 export default function TravelPlanCard({ plan }: TravelPlanCardProps) {
   return (
-    <Card className="w-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="w-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-2xl">
       <CardHeader>
         <CardTitle className="text-primary font-headline">{plan.name}</CardTitle>
         <CardDescription className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export default function TravelPlanCard({ plan }: TravelPlanCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button asChild className="w-full bg-accent hover:bg-opacity-80 text-accent-foreground">
+        <Button asChild className="w-full" variant="default">
           <Link href={`/plan/${plan.id}`}>View Details</Link>
         </Button>
       </CardFooter>

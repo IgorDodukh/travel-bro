@@ -191,9 +191,9 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-card rounded-lg shadow">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-card rounded-2xl shadow">
         <div>
-          <Button variant="outline" onClick={() => router.back()} className="mb-4 md:mb-0">
+          <Button variant="secondary" onClick={() => router.back()} className="mb-4 md:mb-0">
             <ChevronLeft className="w-4 h-4 mr-2" /> Back
           </Button>
           <h2 className="text-3xl font-bold font-headline text-foreground mt-2">{plan.name}</h2>
@@ -203,21 +203,21 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
         </div>
         <div className="flex gap-2 flex-wrap">
           {currentMode === 'new' && (
-            <Button onClick={() => setIsSavePlanDialogOpen(true)} className="bg-lime-400 text-black hover:bg-lime-500">
+            <Button onClick={() => setIsSavePlanDialogOpen(true)} variant="default">
               <Save className="w-4 h-4 mr-2" /> Save This Plan
             </Button>
           )}
           {currentMode === 'existing' && (
-            <Button onClick={toggleEditMode} className="bg-lime-400 text-black hover:bg-lime-500">
+            <Button onClick={toggleEditMode} variant="default">
               <Edit className="w-4 h-4 mr-2" /> Edit Plan
             </Button>
           )}
           {currentMode === 'editing-existing' && (
             <>
-              <Button onClick={handleSaveChanges} className="bg-lime-400 text-black hover:bg-lime-500">
+              <Button onClick={handleSaveChanges} variant="default">
                 <Save className="w-4 h-4 mr-2" /> Save
               </Button>
-              <Button variant="outline" onClick={toggleEditMode}>
+              <Button variant="secondary" onClick={toggleEditMode}>
                 Cancel
               </Button>
             </>
@@ -264,7 +264,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
       {/* View type toggle buttons */}
       <div className="flex justify-center gap-2 my-6">
         <Button
-          variant={viewType === 'list' ? 'default' : 'outline'}
+          variant={viewType === 'list' ? 'default' : 'secondary'}
           onClick={() => setViewType('list')}
           aria-pressed={viewType === 'list'}
         >
@@ -272,7 +272,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           Route View
         </Button>
         <Button
-          variant={viewType === 'map' ? 'default' : 'outline'}
+          variant={viewType === 'map' ? 'default' : 'secondary'}
           onClick={() => setViewType('map')}
           aria-pressed={viewType === 'map'}
         >
@@ -296,7 +296,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           ))}
           {(currentMode === 'new' || currentMode === 'editing-existing') && plan.dailyItineraries.length < plan.duration && (
             <Button
-              variant="outline"
+              variant="secondary"
               className="w-full mt-4"
               onClick={() => {
                 const nextDayNumber = plan.dailyItineraries.length > 0 ? Math.max(...plan.dailyItineraries.map(d => d.day)) + 1 : 1;

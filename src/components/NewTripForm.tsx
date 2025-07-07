@@ -361,7 +361,7 @@ export default function NewTripForm() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl">
+    <Card className="w-full max-w-2xl mx-auto shadow-xl rounded-2xl">
       <CardHeader>
         <CardTitle className="text-2xl font-headline text-primary">Plan Your Next Adventure</CardTitle>
         <CardDescription>Follow these steps to create your personalized travel plan.</CardDescription>
@@ -378,7 +378,7 @@ export default function NewTripForm() {
                   Your previous choices are loaded. Make changes and generate again.
                 </AlertDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={handleResetForm}>
+              <Button type="button" variant="secondary" size="sm" onClick={handleResetForm}>
                 Start Over
               </Button>
             </Alert>
@@ -408,7 +408,11 @@ export default function NewTripForm() {
                     }, 200);
                   }}
                   autoComplete="off"
+                  className="pl-10"
                 />
+                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <MapPin className="h-5 w-5 text-muted-foreground" />
+                 </div>
                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
                     <div className="h-4 w-4">
                       {isFetchingDestination && <Loader2 className="h-full w-full animate-spin" />}
@@ -496,7 +500,7 @@ export default function NewTripForm() {
             <h3 className="text-xl font-semibold mb-2">Interests & Attraction Style</h3>
             <div>
               <Label htmlFor="interests">Your Interests</Label>
-              <div className="flex flex-wrap items-center gap-2 rounded-md border border-input p-2 bg-transparent focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-transparent bg-input p-2 min-h-[48px]">
                   {clientFormData.interests.map((interest) => (
                       <Badge key={interest} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
                           {interest}
@@ -574,16 +578,16 @@ export default function NewTripForm() {
         </CardContent>
         <CardFooter className="flex justify-between">
           {currentStep > 1 ? (
-            <Button type="button" variant="outline" onClick={prevStep} disabled={isPending}>
+            <Button type="button" variant="secondary" onClick={prevStep} disabled={isPending}>
               Back
             </Button>
           ) : <div />}
           {currentStep < totalSteps ? (
-            <Button type="button" onClick={nextStep}>
+            <Button type="button" variant="default" onClick={nextStep}>
               Next
             </Button>
           ) : (
-            <Button type="button" onClick={handleGenerateClick} disabled={isPending} className="ml-auto bg-accent hover:bg-opacity-80 text-accent-foreground">
+            <Button type="button" onClick={handleGenerateClick} disabled={isPending} variant="default" className="ml-auto">
               {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans
             </Button>
@@ -593,5 +597,3 @@ export default function NewTripForm() {
     </Card>
   );
 }
-
-    

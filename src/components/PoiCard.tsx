@@ -17,11 +17,10 @@ interface PoiCardProps {
 
 export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, onDelete, onEdit, isEditingPlan }: PoiCardProps) {
   return (
-    <Card className="mb-2 shadow-sm bg-card/50 flex items-center p-3 gap-3 transition-all duration-300 hover:shadow-md hover:bg-card/70 border-border/20">
+    <Card className="mb-2 shadow-sm bg-secondary flex items-center p-3 gap-3 transition-all duration-300 hover:shadow-md hover:bg-card/70 border-border/20 rounded-2xl">
       {isEditingPlan && <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab flex-shrink-0" />}
       <div className="flex-grow">
         <div className="flex items-center gap-2">
-            {/* <MapPin className="w-4 h-4 text-primary flex-shrink-0" /> */}
             <h4 className="font-semibold text-foreground text-md">
             {poi.name}
             </h4>
@@ -51,7 +50,7 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
 
         <div className="mt-2">
           {poi.type === 'custom' ? (
-            <Badge variant="default">Custom POI</Badge>
+            <Badge variant="secondary">Custom POI</Badge>
           ) : (
             <Badge variant="accent">Suggested POI</Badge>
           )}

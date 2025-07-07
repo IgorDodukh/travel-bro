@@ -17,6 +17,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Apply dark theme by default
+    document.documentElement.classList.add('dark');
     setSavedPlans(getSavedTravelPlans());
     setIsLoading(false);
   }, []);
@@ -57,14 +59,14 @@ export default function HomePage() {
       )}
 
       {savedPlans.length === 0 && !isLoading && (
-        <section className="text-center py-12 bg-card rounded-lg shadow-md">
+        <section className="text-center py-12 bg-card rounded-2xl shadow-md">
           <h3 className="text-xl font-semibold mb-4">No saved trips yet!</h3>
           <p className="text-muted-foreground mb-6">Start planning your dream vacation now.</p>
         </section>
       )}
       
       <div className="fixed bottom-8 right-8 md:static md:mt-12 md:flex md:justify-center">
-        <Button asChild size="lg" className="shadow-xl hover:shadow-2xl transition-shadow duration-300" onClick={handlePlanNewTripClick}>
+        <Button asChild size="lg" variant="default" className="shadow-xl hover:shadow-2xl transition-shadow duration-300" onClick={handlePlanNewTripClick}>
           <Link href="/new-trip" className="flex items-center gap-2">
             <PlusCircle className="w-6 h-6" />
             Plan New Trip

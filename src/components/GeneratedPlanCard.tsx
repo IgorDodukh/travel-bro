@@ -12,7 +12,7 @@ interface GeneratedPlanCardProps {
 
 export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProps) {
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col rounded-2xl">
       <CardHeader>
         <CardTitle className="text-primary font-headline">{plan.planName || `Alternative Plan ${index + 1}`}</CardTitle>
         <CardDescription>A unique route of {plan.pointsOfInterest.length} locations based on your preferences.</CardDescription>
@@ -32,7 +32,7 @@ export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProp
         </div>
       </CardContent>
       <CardFooter>
-        <Button asChild className="w-full">
+        <Button asChild variant="default" className="w-full">
           <Link href={`/new-trip/plan-details/${index}`}>
             View & Customize
             <ArrowRight className="ml-2 h-4 w-4" />
