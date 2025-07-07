@@ -20,7 +20,7 @@ const badgeVariants = cva(
         "suggested-poi":
           "border border-primary/30 bg-primary/20 text-primary",
         "custom-poi":
-          "border-transparent bg-blue-600/50 text-foreground",
+          "border border-blue-500/30 bg-blue-500/20 text-blue-500",
       },
     },
     defaultVariants: {
