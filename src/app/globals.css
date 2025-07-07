@@ -29,7 +29,7 @@ body {
     --accent: 210 40% 96.1%;
     --accent-foreground: 210 40% 9.8%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 85.7% 67.8%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
@@ -85,7 +85,9 @@ body {
     --sidebar-ring: 75 96% 58%;
 
     /* Abstract background pattern */
-    background-image: radial-gradient(hsl(var(--border) / 0.08) 1px, transparent 1px);
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.1) 1px, transparent 1px),
+      linear-gradient(to right, hsl(var(--border) / 0.1) 1px, transparent 1px);
     background-size: 30px 30px;
   }
 }
