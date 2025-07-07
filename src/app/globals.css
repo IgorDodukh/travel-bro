@@ -65,7 +65,7 @@ body {
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 20%; /* #333333 */
-    --input: 0 0% 12%;
+    --input: 0 0% 20%; /* #333333 */
     --ring: 75 96% 59%;
     
     --chart-1: 220 70% 50%;
