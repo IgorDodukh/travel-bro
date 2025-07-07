@@ -99,6 +99,7 @@ export default function NewTripForm() {
   const { toast } = useToast();
   
   const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormActionState);
+  const [isTransitioning, startTransition] = useTransition();
   
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
@@ -357,7 +358,9 @@ export default function NewTripForm() {
     formData.append('attractionType', clientFormData.attractionType);
     formData.append('includeSurroundings', String(clientFormData.includeSurroundings || false));
 
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   };
 
   return (
@@ -589,8 +592,8 @@ export default function NewTripForm() {
               Next
             </Button>
           ) : (
-            <Button type="button" onClick={handleGenerateClick} disabled={isPending} variant="default" className="ml-auto">
-              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            <Button type="button" onClick={handleGenerateClick} disabled={isPending || isTransitioning} variant="default" className="ml-auto">
+              {(isPending || isTransitioning) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Generate Plans
             </Button>
           )}
