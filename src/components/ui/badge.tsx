@@ -16,11 +16,11 @@ const badgeVariants = cva(
           "bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
         accent:
-          "bg-accent text-accent-foreground hover:bg-accent/80",
+          "border-transparent bg-accent text-accent-foreground hover:bg-accent/80",
         "suggested-poi":
-          "border-transparent bg-primary/50 text-primary-foreground",
+          "border-transparent bg-primary/70 text-primary-foreground",
         "custom-poi":
-          "border-transparent bg-black/50 text-foreground",
+          "border-transparent bg-blue-600/50 text-foreground",
       },
     },
     defaultVariants: {
