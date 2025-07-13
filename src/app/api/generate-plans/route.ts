@@ -16,9 +16,21 @@ const ApiInputSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // 1. API Key Authentication
+    const apiKey = request.headers.get('x-api-key');
+    const serverApiKey = process.env.API_SECRET_KEY;
+
+    if (!serverApiKey) {
+      console.error("API_SECRET_KEY is not set in the environment variables.");
+      return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+    }
+
+    if (!apiKey || apiKey !== serverApiKey) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
-    // Validate the incoming request body against the schema
+    // 2. Body Parsing and Validation
+    const body = await request.json();
     const validationResult = ApiInputSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -28,9 +40,8 @@ export async function POST(request: Request) {
       );
     }
 
+    // 3. Call Genkit Flow
     const aiInput: GenerateTravelPlansInput = validationResult.data;
-    
-    // Call the existing Genkit flow with the validated data
     const generatedPlans = await generateTravelPlans(aiInput);
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {
@@ -40,7 +51,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // Return the successful response
+    // 4. Return successful response
     return NextResponse.json(generatedPlans);
 
   } catch (error) {
