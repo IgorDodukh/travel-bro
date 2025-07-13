@@ -16,19 +16,6 @@ const ApiInputSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // 1. API Key Authentication
-    const apiKey = request.headers.get('x-api-key');
-    const serverApiKey = process.env.API_SECRET_KEY;
-
-    if (!serverApiKey) {
-      console.error("API_SECRET_KEY is not set in the environment variables.");
-      return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
-    }
-
-    if (!apiKey || apiKey !== serverApiKey) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    
     // 2. Body Parsing and Validation
     const body = await request.json();
     const validationResult = ApiInputSchema.safeParse(body);
