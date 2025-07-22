@@ -65,6 +65,7 @@ export async function createTravelPlanFromAi(
       dayIndex: aiPoi.day,
       time: aiPoi.time,
       cost: aiPoi.cost,
+      category: aiPoi.category
     }))
     : [];
 

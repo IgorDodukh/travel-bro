@@ -10,6 +10,7 @@ export interface AiGeneratedPointOfInterest {
   time: number;
   day: number;
   cost: string;
+  category: string[];
 }
 
 // Corresponds to the AI flow output structure for a single generated plan
@@ -33,6 +34,7 @@ export interface PointOfInterest {
   type: 'generated' | 'custom';
   time?: number; // in minutes
   cost?: string;
+  category?: string[];
 }
 
 export interface DailyItinerary {

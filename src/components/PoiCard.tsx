@@ -54,6 +54,9 @@ export default function PoiCard({ poi, index, totalItems, onMoveUp, onMoveDown, 
           ) : (
             <Badge variant="suggested-poi">Suggested POI</Badge>
           )}
+          {poi.category?.map((category, index) => (
+            <Badge variant="category" key={index}>{category}</Badge>
+          ))}
         </div>
       </div>
       {isEditingPlan && (

@@ -27,6 +27,7 @@ const AiPointOfInterestSchema = z.object({
   time: z.number().describe('The approximate time to spend at the point of interest (minutes).'),
   day: z.number().describe('The day of the trip when the point of interest is recommended to be visited.'),
   cost: z.string().describe('The estimated cost of the point of interest.'),
+  category: z.array(z.string()).describe('The category of the point of interest.'),
 });
 
 const TravelPlanSchema = z.object({
@@ -140,6 +141,7 @@ const generatePOIsPrompt = ai.definePrompt({
         time: z.number(),
         day: z.number(),
         cost: z.string(),
+        category: z.array(z.string()),
       }))
     }))
   })},
@@ -170,6 +172,7 @@ For each plan, provide:
      - time: recommended average time to spend on this location according to the internet feedbacks in minutes
      - day: The day number (from 1 to {{{duration}}}) for this point of interest. This is crucial for organizing the plan.
      - cost: the cost of visiting this location. For example price of the ticket, etc. Use actual information from the official sources. If no cost set to "Free". If no information was found say "Not found"
+     - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Focus on well-known, easily findable locations. Use precise, official names.
 
@@ -215,6 +218,7 @@ const generatePOIsFlow = ai.defineFlow(
           time: z.number(),
           day: z.number(),
           cost: z.string(),
+          category: z.array(z.string()),
         }))
       }))
     }),
@@ -260,6 +264,7 @@ For each plan:
    - day: The day number (from 1 to {{{duration}}}) for this point of interest.
    - time: Recommended time to spend in minutes.
    - cost: Estimated cost. Use "Free" if no cost, or "Not found" if unknown.
+   - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Only include locations where you're confident of exact coordinates.
 Focus on major tourist attractions, museums, landmarks with verified GPS data.
@@ -333,6 +338,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
                 cost: poi.cost,
                 latitude: coords.lat,
                 longitude: coords.lon,
+                category: poi.category,
               });
               console.debug(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
             } else {
@@ -378,7 +384,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
           day: 1,
           time: 111,
           cost: "Free",
-
+          category: ["Culture"]
         }]
       }]
     };

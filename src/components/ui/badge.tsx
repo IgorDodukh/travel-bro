@@ -21,6 +21,8 @@ const badgeVariants = cva(
           "border border-primary/30 bg-primary/20 text-primary",
         "custom-poi":
           "border border-blue-500/30 bg-blue-500/20 text-blue-500",
+        "category":
+          "border border-gray-500/30 bg-gray-500/20 text-white-500",
       },
     },
     defaultVariants: {
@@ -35,7 +37,7 @@ export interface BadgeProps
 
 function Badge({ className, variant, ...props }: BadgeProps) {
   return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
+    <div className={cn(badgeVariants({ variant }), className, "mr-2")} {...props} />
   )
 }
 
