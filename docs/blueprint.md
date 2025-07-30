@@ -1,4 +1,4 @@
-# **App Name**: MIARA Planner - the most intelligent and advanced tRavel assistant
+# **App Name**: PlaPlan - the most intelligent and advanced travel assistant
 
 ## Core Features:
 

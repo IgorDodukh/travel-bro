@@ -22,11 +22,11 @@ export default function TravelPlanCard({ plan }: TravelPlanCardProps) {
         <div className="space-y-2">
           <p className="flex items-center gap-2 text-sm">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
-            {plan.duration} days
+            {plan.duration} day{plan.duration > 1 ? 's' : ''}
           </p>
           <p className="flex items-center gap-2 text-sm">
             <Info className="w-4 h-4 text-muted-foreground" />
-            {plan.dailyItineraries.reduce((total, day) => total + day.pointsOfInterest.length, 0)} points of interest
+            {plan.dailyItineraries.reduce((total, day) => total + day.pointsOfInterest.length, 0)} places
           </p>
         </div>
       </CardContent>

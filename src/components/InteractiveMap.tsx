@@ -175,7 +175,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
                 "line-cap": "round"
               }}
               paint={{
-                'line-color': '#3B82F6',
+                'line-color': '#ff5633',
                 'line-width': 4,
                 'line-opacity': 0.8,
               }}
@@ -188,7 +188,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
           if (!poi.location) return null;
 
           const isActive = poi.dayIndex === selectedDayIndex;
-          const pinColor = isActive ? '#84cc16' : '#5a5a5a'; // Light green for active, grey for inactive
+          const pinColor = isActive ? '#ff5633' : '#5a5a5a'; // Light green for active, grey for inactive
           const pinOpacity = isActive ? 1 : 0.6;
 
           return (
@@ -206,7 +206,7 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
                 <MapPin
                   className="w-6 h-6 cursor-pointer drop-shadow-lg"
                   fill={pinColor}
-                  stroke="#ffffff"
+                  stroke="#eee"
                   strokeWidth={1}
                 />
               </div>
