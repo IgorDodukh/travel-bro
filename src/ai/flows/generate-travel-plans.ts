@@ -5,8 +5,8 @@
  * Simplified version for debugging - falls back to AI-generated coordinates if geocoding fails
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const GenerateTravelPlansInputSchema = z.object({
   destination: z.string().describe('The destination for the travel plan.'),
@@ -32,6 +32,7 @@ const AiPointOfInterestSchema = z.object({
 
 const TravelPlanSchema = z.object({
   planName: z.string().describe('Name of the travel plan.'),
+  description: z.string().describe('Description of the travel plan.'),
   pointsOfInterest: z.array(AiPointOfInterestSchema).describe('A list of points of interest with coordinates.'),
 });
 
@@ -130,21 +131,24 @@ function normalizePlaceName(name: string) {
 // Two-step approach: Generate POIs first, then get coordinates
 const generatePOIsPrompt = ai.definePrompt({
   name: 'generatePOIsOnly',
-  input: {schema: GenerateTravelPlansInputSchema},
-  output: {schema: z.object({
-    travelPlans: z.array(z.object({
-      planName: z.string(),
-      pointsOfInterest: z.array(z.object({
-        name: z.string(),
-        address: z.string(),
+  input: { schema: GenerateTravelPlansInputSchema },
+  output: {
+    schema: z.object({
+      travelPlans: z.array(z.object({
+        planName: z.string(),
         description: z.string(),
-        time: z.number(),
-        day: z.number(),
-        cost: z.string(),
-        category: z.array(z.string()),
+        pointsOfInterest: z.array(z.object({
+          name: z.string(),
+          address: z.string(),
+          description: z.string(),
+          time: z.number(),
+          day: z.number(),
+          cost: z.string(),
+          category: z.array(z.string()),
+        }))
       }))
-    }))
-  })},
+    })
+  },
   prompt: `As an experienced travel guide, generate 3 travel plans for {{{destination}}} with the following preferences:
 
 Duration: {{{duration}}} days
@@ -163,7 +167,8 @@ CRITICAL RULES:
 
 For each plan, provide:
 1. planName: A descriptive name
-2. pointsOfInterest: A flat array containing locations for the entire trip.
+2. description: A short description of the trip briefly describing the recap of the all selected location. Should be engaging and fun. Recommended length: 100-150 characters.
+3. pointsOfInterest: A flat array containing locations for the entire trip.
    - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
    - For EACH point of interest, provide:
      - name: EXACT official name (as found on Google Maps)
@@ -211,6 +216,7 @@ const generatePOIsFlow = ai.defineFlow(
     outputSchema: z.object({
       travelPlans: z.array(z.object({
         planName: z.string(),
+        description: z.string(),
         pointsOfInterest: z.array(z.object({
           name: z.string(),
           address: z.string(),
@@ -224,7 +230,7 @@ const generatePOIsFlow = ai.defineFlow(
     }),
   },
   async input => {
-    const {output} = await generatePOIsPrompt(input);
+    const { output } = await generatePOIsPrompt(input);
     return output!;
   }
 );
@@ -232,8 +238,8 @@ const generatePOIsFlow = ai.defineFlow(
 // Enhanced AI prompt with better coordinate instructions
 const enhancedPrompt = ai.definePrompt({
   name: 'enhancedTravelPlansPrompt',
-  input: {schema: GenerateTravelPlansInputSchema},
-  output: {schema: GenerateTravelPlansOutputSchema},
+  input: { schema: GenerateTravelPlansInputSchema },
+  output: { schema: GenerateTravelPlansOutputSchema },
   prompt: `You are a travel expert with access to precise GPS coordinates. Generate 3 travel plans for {{{destination}}}.
 
 Trip Details:
@@ -255,7 +261,8 @@ CRITICAL RULES:
 
 For each plan:
 1. planName: Descriptive theme
-2. pointsOfInterest: A flat array of locations for the entire trip. For each location, provide:
+2. description: A short description of the trip briefly describing the recap of the all selected location. Should be engaging and fun. Recommended length: 100-150 characters.
+3. pointsOfInterest: A flat array of locations for the entire trip. For each location, provide:
    - name: Official name as on Google Maps
    - address: EXACT address (as found on Google Maps)
    - description: Brief, engaging description
@@ -299,7 +306,7 @@ const enhancedFlow = ai.defineFlow(
     outputSchema: GenerateTravelPlansOutputSchema,
   },
   async input => {
-    const {output} = await enhancedPrompt(input);
+    const { output } = await enhancedPrompt(input);
     return output!;
   }
 );
@@ -312,22 +319,21 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
   try {
     // Strategy 1: Two-step process with external geocoding
     console.log('Trying Strategy 1: Two-step process with geocoding...');
-    
+
     const poisOnly = await generatePOIsFlow(input);
     console.log('POIs generated:', poisOnly);
 
     if (poisOnly?.travelPlans?.length > 0) {
-      
+
       const plansWithCoords = await Promise.all(
         poisOnly.travelPlans.map(async (plan) => {
-          console.log(`>>> Processing plan: ${plan.planName} with ${plan.pointsOfInterest.length} POIs`);
-          
+
           const poisWithCoords = [];
-          
+
           for (const poi of plan.pointsOfInterest) {
             console.debug(`Geocoding: ${poi.name}`);
             const coords = await geocodeWithGoogle(poi.name, poi.address);
-            
+
             if (coords) {
               poisWithCoords.push({
                 name: poi.name,
@@ -345,16 +351,17 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
               console.error(`✗ Failed to geocode: ${poi.name}`);
             }
           }
-          
+
           return {
             planName: plan.planName,
+            description: plan.description,
             pointsOfInterest: poisWithCoords,
           };
         })
       );
-      
+
       const validPlans = plansWithCoords.filter(plan => plan.pointsOfInterest.length > 0);
-      
+
       if (validPlans.length > 0) {
         console.log('Strategy 1 succeeded');
         return { travelPlans: validPlans };
@@ -364,7 +371,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
     // Strategy 2: Enhanced AI prompt with better coordinate instructions
     console.error('Strategy 1 failed, trying Strategy 2: Enhanced AI prompt...');
     const enhancedResult = await enhancedFlow(input);
-    
+
     if (enhancedResult?.travelPlans?.length > 0) {
       console.log('Strategy 2 succeeded');
       return enhancedResult;
@@ -375,6 +382,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
     return {
       travelPlans: [{
         planName: `${input.destination} Explorer`,
+        description: `Discover the wonders of ${input.destination}.`,
         pointsOfInterest: [{
           name: 'City Center',
           description: 'Explore the heart of the city',
