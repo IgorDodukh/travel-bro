@@ -167,7 +167,7 @@ CRITICAL RULES:
 
 For each plan, provide:
 1. planName: A descriptive name
-2. description: A short description of the trip briefly describing the recap of the all selected location. Should be engaging and fun. Recommended length: 100-150 characters.
+2. description: A short description of the trip briefly describing experience of this location. It should be maximum of 150 characters with spaces. Do not mention location names, make the description more abstract and catchy.
 3. pointsOfInterest: A flat array containing locations for the entire trip.
    - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
    - For EACH point of interest, provide:
@@ -261,7 +261,7 @@ CRITICAL RULES:
 
 For each plan:
 1. planName: Descriptive theme
-2. description: A short description of the trip briefly describing the recap of the all selected location. Should be engaging and fun. Recommended length: 100-150 characters.
+2. description: A short description of the trip briefly describing experience of this location. It should be maximum of 150 characters with spaces. Do not mention location names, make the description more abstract and catchy.
 3. pointsOfInterest: A flat array of locations for the entire trip. For each location, provide:
    - name: Official name as on Google Maps
    - address: EXACT address (as found on Google Maps)
