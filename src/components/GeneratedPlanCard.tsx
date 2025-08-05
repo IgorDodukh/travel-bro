@@ -15,7 +15,7 @@ export default function GeneratedPlanCard({ plan, index }: GeneratedPlanCardProp
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col rounded-2xl">
       <CardHeader>
         <CardTitle className="text-primary font-headline">{plan.planName || `Alternative Plan ${index + 1}`}</CardTitle>
-        <CardDescription>A unique route of {plan.pointsOfInterest.length} locations based on your preferences.</CardDescription>
+        <CardDescription>{plan.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="space-y-2">

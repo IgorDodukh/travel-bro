@@ -16,6 +16,7 @@ export interface AiGeneratedPointOfInterest {
 // Corresponds to the AI flow output structure for a single generated plan
 export interface AiGeneratedPlan {
   planName: string;
+  description: string;
   pointsOfInterest: AiGeneratedPointOfInterest[];
 }
 

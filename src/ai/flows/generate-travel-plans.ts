@@ -167,7 +167,7 @@ CRITICAL RULES:
 
 For each plan, provide:
 1. planName: A descriptive name
-2. description: A short description of the trip briefly describing experience of this location. It should be maximum of 150 characters with spaces. Do not mention location names, make the description more abstract and catchy.
+2. description: Craft a brief yet evocative description for a featured travel plan. The description should create a sense of place and experience, focusing on sensory details and the emotional journey rather than just listing facts. The tone should be inspiring and abstract, without explicitly naming locations. Focus on what a traveler will feel, see, and do. Keep it concise, aiming from MIN 150 to MAX 200 characters with spaces, so it fits neatly into a mobile app UI.
 3. pointsOfInterest: A flat array containing locations for the entire trip.
    - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
    - For EACH point of interest, provide:
@@ -261,7 +261,7 @@ CRITICAL RULES:
 
 For each plan:
 1. planName: Descriptive theme
-2. description: A short description of the trip briefly describing experience of this location. It should be maximum of 150 characters with spaces. Do not mention location names, make the description more abstract and catchy.
+2. description: Craft a brief yet evocative description for a featured travel plan. The description should create a sense of place and experience, focusing on sensory details and the emotional journey rather than just listing facts. The tone should be inspiring and abstract, without explicitly naming locations. Focus on what a traveler will feel, see, and do. Keep it concise, aiming for up to 200 characters with spaces MAX, so it fits neatly into a mobile app UI.
 3. pointsOfInterest: A flat array of locations for the entire trip. For each location, provide:
    - name: Official name as on Google Maps
    - address: EXACT address (as found on Google Maps)
