@@ -22,6 +22,12 @@ export default function Header() {
       description: 'Saved trips collection'
     },
     {
+      href: '/support',
+      label: 'Contact Us',
+      icon: Compass,
+      description: 'Contact form'
+    },
+    {
       href: '/about',
       label: 'About',
       icon: MapPin,
