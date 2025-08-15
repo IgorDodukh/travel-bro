@@ -17,7 +17,7 @@ export default function Header() {
     },
     {
       href: '/my-plans',
-      label: 'Saved Plans',
+      label: 'Collection',
       icon: Compass,
       description: 'Saved trips collection'
     },
