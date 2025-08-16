@@ -10,7 +10,7 @@ import SavePlanDialog from './SavePlanDialog';
 import { saveTravelPlan as savePlanToStorage } from '@/lib/localStorageUtils';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { ChevronLeft, Edit, Save, Trash2, PlusCircle, Loader2, List, Map as MapIcon } from 'lucide-react';
+import { ChevronLeft, Edit, Save, Trash2, PlusCircle, Loader2, List, Map as MapIcon, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import dynamic from 'next/dynamic';
 import { groupByDay } from '@/lib/itineraryOptimization';
+import ActionButton from './ui/action-button';
 
 // Dynamically import InteractiveMap to ensure it's client-side only
 const InteractiveMap = dynamic(() => import('@/components/InteractiveMap'), {
@@ -194,9 +195,10 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-card rounded-2xl shadow">
         <div>
-          <Button variant="secondary" onClick={() => router.back()} className="mb-4 md:mb-0">
+          <ActionButton title="Back" isBack isSecondary onClick={() => router.back()} />
+          {/* <Button variant="secondary" onClick={() => router.back()} className="mb-4 md:mb-0">
             <ChevronLeft className="w-4 h-4 mr-2" /> Back
-          </Button>
+          </Button> */}
           <h2 className="text-3xl font-bold font-headline text-foreground mt-2">{plan.name}</h2>
           <p className="text-muted-foreground">
             {plan.destination} - {plan.duration} days
@@ -209,23 +211,18 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
             </Button>
           )}
           {currentMode === 'existing' && (
-            <Button onClick={toggleEditMode} variant="default">
-              <Edit className="w-4 h-4 mr-2" /> Edit Plan
-            </Button>
+            <ActionButton title="Edit Plan" onClick={toggleEditMode} icon={<Edit className="w-4 h-4 mr-2" />} />
           )}
           {currentMode === 'editing-existing' && (
             <>
-              <Button onClick={handleSaveChanges} variant="default">
-                <Save className="w-4 h-4 mr-2" /> Save
-              </Button>
-              <Button variant="secondary" onClick={toggleEditMode}>
-                Cancel
-              </Button>
+              <ActionButton title="Save" onClick={handleSaveChanges} icon={<Save className="w-4 h-4 mr-2" />} />
+              <ActionButton title="Discard" onClick={toggleEditMode} icon={<X className="w-4 h-4 mr-2" />} isSecondary />
             </>
           )}
           {(currentMode === 'existing' || currentMode === 'editing-existing') && onDeletePlan && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
+                {/* <ActionButton title="Delete Plan" icon={<Trash2 className="w-4 h-4 mr-2" />} isDestructive /> */}
                 <Button variant="destructive">
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
                 </Button>

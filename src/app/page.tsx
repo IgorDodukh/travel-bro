@@ -86,7 +86,7 @@ export default function HomePage() {
               <Button
                 asChild
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 px-12 rounded-2xl text-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 relative overflow-hidden group"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 px-12 rounded-2xl text-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 relative overflow-hidden group text-white"
                 onClick={handlePlanNewTripClick}
               >
                 <Link href="/new-trip" className="flex items-center gap-3 relative z-10">

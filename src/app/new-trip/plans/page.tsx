@@ -11,19 +11,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/new-trip/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useApiLimit } from '@/contexts/ApiLimitContext';
+import { LimitExceededPopup } from '@/components/LimitExceedsPopup';
 
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
 export default function GeneratedPlansPage() {
+  const { canMakeApiCall, useApiCall, remainingCalls, getTimeUntilReset } = useApiLimit();
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const [generatedPlansOutput, setGeneratedPlansOutput] = useState<GenerateTravelPlansOutput | null>(null);
   const [formInput, setFormInput] = useState<NewTripFormState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+
   // For regeneration action
   const [regenerationState, regenerateAction, isRegenerating] = useActionState<NewTripFormActionState | null, FormData>(handleGeneratePlansAction, null);
 
@@ -46,7 +50,7 @@ export default function GeneratedPlansPage() {
         setError("No travel plans found in session. Please try generating them again.");
       }
     } else {
-        setError("Session storage is not available.");
+      setError("Session storage is not available.");
     }
     setIsLoading(false);
   }, []);
@@ -87,7 +91,12 @@ export default function GeneratedPlansPage() {
     router.push('/new-trip');
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
+    if (!canMakeApiCall()) {
+      setShowLimitPopup(true);
+      return;
+    }
+
     if (!formInput) {
       toast({
         title: "Error",
@@ -106,7 +115,8 @@ export default function GeneratedPlansPage() {
     formData.append('interests', formInput.interests.join(','));
     formData.append('attractionType', formInput.attractionType);
     formData.append('includeSurroundings', String(formInput.includeSurroundings || false));
-    
+
+    await useApiCall();
     regenerateAction(formData);
   };
 
@@ -162,7 +172,7 @@ export default function GeneratedPlansPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-8">
       <div className="text-center mb-8">
@@ -190,6 +200,10 @@ export default function GeneratedPlansPage() {
           Generate Again
         </Button>
       </div>
+      <LimitExceededPopup 
+        isOpen={showLimitPopup} 
+        onClose={() => setShowLimitPopup(false)} 
+      />
     </div>
   );
 }

@@ -26,14 +26,8 @@ export default function AboutPage() {
 
                 {/* Page Header */}
                 <section className="text-center max-w-4xl mx-auto mb-16 md:mb-24">
-                    <p
-                        className="text-primary font-semibold mb-3 opacity-0 animate-fadeInUp"
-                        style={{ animationDelay: '100ms', animationFillMode: 'forwards' }}
-                    >
-                        Our Mission
-                    </p>
                     <h1
-                        className="text-4xl md:text-6xl font-bold tracking-tighter text-foreground mb-4 opacity-0 animate-fadeInUp"
+                        className="text-3xl md:text-6xl font-bold tracking-tighter text-foreground mb-4 opacity-0 animate-fadeInUp"
                         style={{ animationDelay: '200ms', animationFillMode: 'forwards' }}
                     >
                         Making Every Journey Unforgettable
@@ -135,7 +129,7 @@ export default function AboutPage() {
                     <Button
                         asChild
                         size="lg"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 px-12 rounded-2xl text-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 px-12 rounded-2xl text-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-white"
                     >
                         <Link href="/new-trip" className="flex items-center gap-3">
                             Plan Your Trip for Free

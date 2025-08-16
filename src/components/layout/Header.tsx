@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { MapPin, Compass, Sparkles, Home } from 'lucide-react';
+import { CompactApiCounter } from '../CompactApiCounter';
+import { CompactApiCounterWithModal } from '../CompactApiCounterWithModal';
 
 export default function Header() {
   const pathname = usePathname();
@@ -40,6 +42,11 @@ export default function Header() {
       return pathname === '/';
     }
     return pathname.startsWith(href);
+  };
+
+  const handleCounterPress = () => {
+    // You can show a modal, navigate to settings, or show more details
+    console.log('API counter pressed - show usage details');
   };
 
   return (
@@ -103,10 +110,13 @@ export default function Header() {
               );
             })}
 
+            <CompactApiCounterWithModal />
+
+
             {/* CTA Button */}
             <Link
               href="/new-trip"
-              className="ml-4 relative group flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105"
+              className="ml-4 relative group flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-white"
             >
               <div className="w-5 h-5 bg-primary-foreground/20 rounded-full flex items-center justify-center">
                 <Sparkles className="w-3 h-3" />

@@ -19,6 +19,9 @@ import type { NewTripFormState } from '@/lib/types';
 import { Switch } from './ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
+import { useApiLimit } from '@/contexts/ApiLimitContext';
+import { LimitExceededPopup } from './LimitExceedsPopup';
+import ActionButton from './ui/action-button';
 
 const initialFormActionState: NewTripFormActionState = { success: false };
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -50,8 +53,8 @@ function debounce<T extends (...args: any[]) => any>(
   delay: number
 ): ((...args: Parameters<T>) => void) & { cancel: () => void } {
   let timeout: NodeJS.Timeout;
-  
-  const debouncedFunc = function(this: any, ...args: Parameters<T>) {
+
+  const debouncedFunc = function (this: any, ...args: Parameters<T>) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), delay);
   };
@@ -93,19 +96,21 @@ const getInitialState = (): NewTripFormState => {
 };
 
 export default function NewTripForm() {
+  const { canMakeApiCall, useApiCall, remainingCalls, getTimeUntilReset } = useApiLimit();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const [state, formAction, isPending] = useActionState(handleGeneratePlansAction, initialFormActionState);
   const [isTransitioning, startTransition] = useTransition();
-  
+
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
 
   const [clientFormData, setClientFormData] = useState<NewTripFormState>(getInitialState);
   const [interestInput, setInterestInput] = useState('');
-  
+  const [showLimitPopup, setShowLimitPopup] = useState(false);
+
   const [isPreloaded, setIsPreloaded] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !!sessionStorage.getItem(SESSION_STORAGE_FORM_INPUT_KEY);
@@ -199,7 +204,7 @@ export default function NewTripForm() {
       });
     }
   };
-  
+
 
   const handleSelectChange = (name: string, value: string) => {
     setClientFormData(prev => ({ ...prev, [name]: value }));
@@ -211,7 +216,7 @@ export default function NewTripForm() {
       });
     }
   };
-  
+
   const handleSliderChange = (value: number[]) => {
     const numericValue = value[0];
     handleSelectChange('attractionType', attractionStyleMap[numericValue]);
@@ -226,44 +231,44 @@ export default function NewTripForm() {
     setDestinationSuggestions([]);
     setShowDestinationSuggestions(false);
     if (errors.destination) {
-        setErrors(prev => {
-            const newErrors = { ...prev };
-            delete newErrors.destination;
-            return newErrors;
-        });
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.destination;
+        return newErrors;
+      });
     }
   };
 
   const handleInterestKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
-        e.preventDefault();
-        const newInterest = interestInput.trim();
-        if (newInterest && !clientFormData.interests.includes(newInterest)) {
-            const newInterests = [...clientFormData.interests, newInterest];
-            setClientFormData(prev => ({ ...prev, interests: newInterests }));
-            if (errors.interests) {
-                setErrors(prev => {
-                    const newErrors = { ...prev };
-                    delete newErrors.interests;
-                    return newErrors;
-                });
-            }
+      e.preventDefault();
+      const newInterest = interestInput.trim();
+      if (newInterest && !clientFormData.interests.includes(newInterest)) {
+        const newInterests = [...clientFormData.interests, newInterest];
+        setClientFormData(prev => ({ ...prev, interests: newInterests }));
+        if (errors.interests) {
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.interests;
+            return newErrors;
+          });
         }
-        setInterestInput('');
+      }
+      setInterestInput('');
     }
   };
 
   const handleRemoveInterest = (interestToRemove: string) => {
-      setClientFormData(prev => ({
-          ...prev,
-          interests: prev.interests.filter(interest => interest !== interestToRemove)
-      }));
+    setClientFormData(prev => ({
+      ...prev,
+      interests: prev.interests.filter(interest => interest !== interestToRemove)
+    }));
   };
 
   const validateStep = (step: number) => {
     const validationData = {
-        ...clientFormData,
-        duration: String(clientFormData.duration),
+      ...clientFormData,
+      duration: String(clientFormData.duration),
     };
 
     let fieldsToValidate: (keyof z.infer<typeof clientSchema>)[] = [];
@@ -278,7 +283,7 @@ export default function NewTripForm() {
     const stepSchema = clientSchema.pick(
       fieldsToValidate.reduce((acc, field) => ({ ...acc, [field]: true }), {})
     );
-    
+
     const result = stepSchema.safeParse(validationData);
 
     if (!result.success) {
@@ -302,9 +307,9 @@ export default function NewTripForm() {
       setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     }
   };
-  
+
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
-  
+
   const handleResetForm = () => {
     setClientFormData(defaultFormState);
     setInterestInput('');
@@ -324,6 +329,11 @@ export default function NewTripForm() {
   };
 
   const handleGenerateClick = () => {
+    if (!canMakeApiCall()) {
+      setShowLimitPopup(true);
+      return;
+    }
+
     const validationData = {
       ...clientFormData,
       duration: String(clientFormData.duration),
@@ -358,7 +368,8 @@ export default function NewTripForm() {
     formData.append('attractionType', clientFormData.attractionType);
     formData.append('includeSurroundings', String(clientFormData.includeSurroundings || false));
 
-    startTransition(() => {
+    startTransition(async () => {
+      await useApiCall();
       formAction(formData);
     });
   };
@@ -366,7 +377,7 @@ export default function NewTripForm() {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl rounded-2xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline text-primary">Plan Your Next Adventure</CardTitle>
+        <CardTitle className="text-2xl font-headline text-gray-700">Plan Your Next Adventure</CardTitle>
         <CardDescription>Follow these steps to create your personalized travel plan.</CardDescription>
         <Progress value={(currentStep / totalSteps) * 100} className="w-full mt-2" />
         <p className="text-sm text-muted-foreground mt-1 text-center">Step {currentStep} of {totalSteps}</p>
@@ -406,35 +417,35 @@ export default function NewTripForm() {
                   onBlur={() => {
                     setTimeout(() => {
                       if (showDestinationSuggestions) {
-                         setShowDestinationSuggestions(false);
+                        setShowDestinationSuggestions(false);
                       }
                     }, 200);
                   }}
                   autoComplete="off"
                   className="pl-10"
                 />
-                 <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                    <MapPin className="h-5 w-5 text-muted-foreground" />
-                 </div>
-                 <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <div className="h-4 w-4">
-                      {isFetchingDestination && <Loader2 className="h-full w-full animate-spin" />}
-                    </div>
-                 </div>
-                 {showDestinationSuggestions && destinationSuggestions.length > 0 && (
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                  <div className="h-4 w-4">
+                    {isFetchingDestination && <Loader2 className="h-full w-full animate-spin" />}
+                  </div>
+                </div>
+                {showDestinationSuggestions && destinationSuggestions.length > 0 && (
                   <div className="absolute top-full z-10 mt-1 w-full rounded-md border bg-background shadow-lg">
-                      <ul className="py-1">
-                          {destinationSuggestions.map((suggestion) => (
-                              <li
-                                  key={suggestion.place_id}
-                                  className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                                  onMouseDown={() => handleSelectDestination(suggestion)}
-                              >
-                                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                                  <span>{suggestion.description}</span>
-                              </li>
-                          ))}
-                      </ul>
+                    <ul className="py-1">
+                      {destinationSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.place_id}
+                          className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                          onMouseDown={() => handleSelectDestination(suggestion)}
+                        >
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{suggestion.description}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -506,33 +517,33 @@ export default function NewTripForm() {
             <div>
               <Label htmlFor="interests">Your Interests</Label>
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-transparent bg-input p-2 min-h-[48px]">
-                  {clientFormData.interests.map((interest) => (
-                      <Badge key={interest} variant="default" className="flex items-center gap-1.5 py-1 px-2">
-                          {interest}
-                          <button
-                              type="button"
-                              className="rounded-full ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                              onClick={() => handleRemoveInterest(interest)}
-                              aria-label={`Remove ${interest}`}
-                          >
-                              <X className="h-3 w-3" />
-                          </button>
-                      </Badge>
-                  ))}
-                  <Input
-                      id="interests"
-                      placeholder={clientFormData.interests.length > 0 ? "Add more..." : "e.g., museums, hiking, local food..."}
-                      value={interestInput}
-                      onChange={(e) => setInterestInput(e.target.value)}
-                      onKeyDown={handleInterestKeyDown}
-                      className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-8 bg-transparent min-w-[120px]"
-                      autoComplete="off"
-                  />
+                {clientFormData.interests.map((interest) => (
+                  <Badge key={interest} variant="default" className="flex items-center gap-1.5 py-1 px-2">
+                    {interest}
+                    <button
+                      type="button"
+                      className="rounded-full ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                      onClick={() => handleRemoveInterest(interest)}
+                      aria-label={`Remove ${interest}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+                <Input
+                  id="interests"
+                  placeholder={clientFormData.interests.length > 0 ? "Add more..." : "e.g., museums, hiking, local food..."}
+                  value={interestInput}
+                  onChange={(e) => setInterestInput(e.target.value)}
+                  onKeyDown={handleInterestKeyDown}
+                  className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-8 bg-transparent min-w-[120px]"
+                  autoComplete="off"
+                />
               </div>
               <p className="text-xs text-muted-foreground mt-1">Press Enter or a comma to add an interest.</p>
               {errors?.interests && <p className="text-sm text-destructive mt-1">{errors.interests[0]}</p>}
             </div>
-             <div>
+            <div>
               <Label htmlFor="attractionType">Attraction Style</Label>
               <div className="pt-4">
                 <Slider
@@ -555,7 +566,7 @@ export default function NewTripForm() {
               {errors?.attractionType && <p className="text-sm text-destructive mt-1">{errors.attractionType[0]}</p>}
             </div>
           </div>
-          
+
           <input type="hidden" name="destination" value={clientFormData.destination} />
           <input type="hidden" name="duration" value={String(clientFormData.duration)} />
           <input type="hidden" name="accommodation" value={clientFormData.accommodation} />
@@ -583,22 +594,22 @@ export default function NewTripForm() {
         </CardContent>
         <CardFooter className="flex justify-between">
           {currentStep > 1 ? (
-            <Button type="button" variant="secondary" onClick={prevStep} disabled={isPending}>
-              Back
-            </Button>
+            // <Button type="button" variant="secondary" onClick={prevStep} disabled={isPending}>
+            //   Back
+            // </Button>
+            <ActionButton title="Back" isSecondary onClick={prevStep} />
           ) : <div />}
           {currentStep < totalSteps ? (
-            <Button type="button" variant="default" onClick={nextStep}>
-              Next
-            </Button>
+            <ActionButton title="Next" onClick={nextStep} />
           ) : (
-            <Button type="button" onClick={handleGenerateClick} disabled={isPending || isTransitioning} variant="default" className="ml-auto">
-              {(isPending || isTransitioning) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Generate Plans
-            </Button>
+            <ActionButton title="Generate Plans" onClick={handleGenerateClick} disabled={isPending || isTransitioning} />
           )}
         </CardFooter>
       </form>
+      <LimitExceededPopup
+        isOpen={showLimitPopup}
+        onClose={() => setShowLimitPopup(false)}
+      />
     </Card>
   );
 }
