@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -42,6 +41,9 @@ const GenerateTravelPlansOutputSchema = z.object({
 
 export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSchema>;
 export type GenerateTravelPlansOutput = z.infer<typeof GenerateTravelPlansOutputSchema>;
+// FIX: Create a TypeScript type from the Zod schema
+export type AiPointOfInterest = z.infer<typeof AiPointOfInterestSchema>;
+
 
 // Simplified geocoding function
 async function simpleGeocode(
@@ -186,7 +188,31 @@ Example of good names:
 - "Pastéis de Belém" (not "famous pastry shop")
 - "Miradouro da Senhora do Monte" (not "viewpoint")
 
-Return JSON without coordinates.`,
+Return ONLY a valid JSON object matching the schema.
+
+Here is an example of the required JSON structure:
+\`\`\`json
+{
+  "travelPlans": [
+    {
+      "planName": "Historic Lisbon Discovery",
+      "description": "A journey through the heart of Lisbon's most iconic historical sites.",
+      "pointsOfInterest": [
+        {
+          "name": "Jerónimos Monastery",
+          "address": "Praça do Império 1400-206 Lisboa, Portugal",
+          "description": "A masterpiece of Manueline architecture.",
+          "time": 90,
+          "day": 1,
+          "cost": "€10",
+          "category": ["History", "Art"]
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+`,
   config: {
     safetySettings: [
       {
@@ -230,8 +256,17 @@ const generatePOIsFlow = ai.defineFlow(
     }),
   },
   async input => {
-    const { output } = await generatePOIsPrompt(input);
-    return output!;
+    console.debug('=== Generating POIs input ===', JSON.stringify(input, null, 2));
+    const response = await generatePOIsPrompt(input);
+    const output = response.output;
+
+    if (!output || !output.travelPlans) {
+        console.error('!!! AI failed to generate valid POIs. Output was null or empty.');
+        return { travelPlans: [] }; 
+    }
+
+    console.debug('=== Generated POIs ===', JSON.stringify(output, null, 2));
+    return output;
   }
 );
 
@@ -306,8 +341,16 @@ const enhancedFlow = ai.defineFlow(
     outputSchema: GenerateTravelPlansOutputSchema,
   },
   async input => {
-    const { output } = await enhancedPrompt(input);
-    return output!;
+    const response = await enhancedPrompt(input);
+    const output = response.output;
+
+    // FIX: Added safety check to the primary flow
+    if (!output || !output.travelPlans) {
+        console.error('!!! AI (enhancedFlow) failed to generate valid plans. Output was null or empty.');
+        return { travelPlans: [] }; 
+    }
+    
+    return output;
   }
 );
 
@@ -317,45 +360,45 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
   console.log('Input:', input);
 
   try {
-    // Strategy 1: Two-step process with external geocoding
-    console.log('Trying Strategy 1: Two-step process with geocoding...');
+    // Strategy 1 (NEW PRIMARY): Enhanced AI prompt with coordinates
+    console.debug('Trying Strategy 1: Enhanced AI prompt with built-in coordinates...');
+    const enhancedResult = await enhancedFlow(input);
 
+    if (enhancedResult?.travelPlans?.length > 0) {
+      console.debug('Strategy 1 succeeded');
+      return enhancedResult;
+    }
+
+    // Strategy 2 (NEW FALLBACK): Two-step process with parallel geocoding
+    console.error('Strategy 1 failed, trying Strategy 2: Two-step process with geocoding...');
     const poisOnly = await generatePOIsFlow(input);
-    console.log('POIs generated:', poisOnly);
 
     if (poisOnly?.travelPlans?.length > 0) {
-
       const plansWithCoords = await Promise.all(
         poisOnly.travelPlans.map(async (plan) => {
-
-          const poisWithCoords = [];
-
-          for (const poi of plan.pointsOfInterest) {
+          
+          const poisWithCoordsPromises = plan.pointsOfInterest.map(async (poi) => {
             console.debug(`Geocoding: ${poi.name}`);
             const coords = await geocodeWithGoogle(poi.name, poi.address);
-
             if (coords) {
-              poisWithCoords.push({
-                name: poi.name,
-                description: poi.description,
-                address: poi.address,
-                day: poi.day,
-                time: poi.time,
-                cost: poi.cost,
+              console.debug(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
+              return {
+                ...poi,
                 latitude: coords.lat,
                 longitude: coords.lon,
-                category: poi.category,
-              });
-              console.debug(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
-            } else {
-              console.error(`✗ Failed to geocode: ${poi.name}`);
+              };
             }
-          }
+            console.error(`✗ Failed to geocode: ${poi.name}`);
+            return null;
+          });
+
+          const resolvedPois = await Promise.all(poisWithCoordsPromises);
 
           return {
             planName: plan.planName,
             description: plan.description,
-            pointsOfInterest: poisWithCoords,
+            // FIX: Use the inferred TypeScript type for the assertion
+            pointsOfInterest: resolvedPois.filter(p => p !== null) as AiPointOfInterest[],
           };
         })
       );
@@ -363,43 +406,16 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
       const validPlans = plansWithCoords.filter(plan => plan.pointsOfInterest.length > 0);
 
       if (validPlans.length > 0) {
-        console.log('Strategy 1 succeeded');
+        console.log('Strategy 2 succeeded');
         return { travelPlans: validPlans };
       }
     }
 
-    // Strategy 2: Enhanced AI prompt with better coordinate instructions
-    console.error('Strategy 1 failed, trying Strategy 2: Enhanced AI prompt...');
-    const enhancedResult = await enhancedFlow(input);
-
-    if (enhancedResult?.travelPlans?.length > 0) {
-      console.log('Strategy 2 succeeded');
-      return enhancedResult;
-    }
-
-    // Strategy 3: Fallback with minimal filtering
-    console.log('Strategy 2 failed, using fallback strategy...');
-    return {
-      travelPlans: [{
-        planName: `${input.destination} Explorer`,
-        description: `Discover the wonders of ${input.destination}.`,
-        pointsOfInterest: [{
-          name: 'City Center',
-          description: 'Explore the heart of the city',
-          latitude: 38.7223,  // Lisbon center as example
-          longitude: -9.1393,
-          address: "City Center, Lisbon, Portugal",
-          day: 1,
-          time: 111,
-          cost: "Free",
-          category: ["Culture"]
-        }]
-      }]
-    };
+    throw new Error('All generation strategies failed to produce a valid plan.');
 
   } catch (error) {
     console.error('All strategies failed:', error);
-    let errorMessage = "An unexpected error occurred while generating travel plans.";
+    let errorMessage = "An unexpected error occurred.";
     if (error instanceof Error) {
       errorMessage = error.message;
     }
