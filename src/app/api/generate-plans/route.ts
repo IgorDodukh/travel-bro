@@ -14,39 +14,51 @@ const ApiInputSchema = z.object({
   includeSurroundings: z.boolean().optional(),
 });
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Allow any origin
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  });
+}
+
 export async function POST(request: Request) {
   try {
-    // 2. Body Parsing and Validation
     const body = await request.json();
     const validationResult = ApiInputSchema.safeParse(body);
 
     if (!validationResult.success) {
       return NextResponse.json(
         { error: 'Invalid input', details: validationResult.error.flatten().fieldErrors },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
-    // 3. Call Genkit Flow
     const aiInput: GenerateTravelPlansInput = validationResult.data;
     const generatedPlans = await generateTravelPlans(aiInput);
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {
       return NextResponse.json(
         { error: 'Could not generate travel plans with the provided preferences.' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
-    
-    // 4. Return successful response
-    return NextResponse.json(generatedPlans);
+
+    return NextResponse.json(generatedPlans, {
+      headers: corsHeaders,
+    });
 
   } catch (error) {
     console.error('[API /generate-plans] Error:', error);
     let errorMessage = "An unexpected error occurred.";
     if (error instanceof Error) {
-        errorMessage = error.message;
+      errorMessage = error.message;
     }
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500, headers: corsHeaders });
   }
 }
