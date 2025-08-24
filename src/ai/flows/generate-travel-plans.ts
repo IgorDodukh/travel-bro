@@ -165,6 +165,7 @@ CRITICAL RULES:
 {{#if includeSurroundings}}
 - Include noteworthy attractions in the surrounding areas, up to 200km away.
 {{/if}}
+- All fields for pointsOfInterest are mandatory. They should always be present with the value which is NOT null and NOT empty.
 - All locations MUST be grouped by days based on their position to each other. Group close locations into one day and order them by distance from each other to make a smooth journey but don't forget to split all journey into {{{duration}}} days.
 
 For each plan, provide:
@@ -292,6 +293,7 @@ For each of the 3 travel plans you generate, you MUST create a complete itinerar
 CRITICAL RULES:
 - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
 - Provide EXACT coordinates (4+ decimal places) for well-known locations only.
+- All fields for pointsOfInterest are mandatory. They should always be present with the value which is NOT null and NOT empty.
 - All locations MUST be grouped by day based on their proximity to each other to create a logical daily route.
 
 For each plan:
