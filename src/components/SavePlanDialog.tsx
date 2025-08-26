@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ActionButton from './ui/action-button';
 
 interface SavePlanDialogProps {
   isOpen: boolean;
@@ -51,9 +52,7 @@ export default function SavePlanDialog({ isOpen, onClose, onSavePlan, initialPla
           <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>
           </DialogClose>
-          <Button type="button" onClick={handleSubmit} disabled={!planName.trim()}>
-            Save Plan
-          </Button>
+          <ActionButton title="Save Plan" onClick={handleSubmit} disabled={!planName.trim()} />
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -139,10 +139,10 @@ export default function InteractiveMap({ pointsOfInterest }: InteractiveMapProps
             <button
               key={day}
               onClick={() => setSelectedDayIndex(day)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedDayIndex === day
-                  ? 'bg-primary text-primary-foreground shadow'
-                  : 'bg-transparent hover:bg-primary/10 text-primary'
+                  ? 'bg-primary text-white font-bold shadow'
+                  : 'bg-transparent hover:bg-primary/10 text-gray-500'
               }`}
             >
               Day {day}

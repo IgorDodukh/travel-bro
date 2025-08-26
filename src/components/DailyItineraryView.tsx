@@ -4,6 +4,7 @@ import type { DailyItinerary, PointOfInterest } from '@/lib/types';
 import PoiCard from './PoiCard';
 import { Button } from './ui/button';
 import { PlusCircle } from 'lucide-react';
+import ActionButton from './ui/action-button';
 
 interface DailyItineraryViewProps {
   dayItinerary: DailyItinerary;
@@ -14,7 +15,7 @@ interface DailyItineraryViewProps {
 }
 
 export default function DailyItineraryView({ dayItinerary, onUpdateDayItinerary, onAddPoiClick, onEditPoiClick, isEditingPlan }: DailyItineraryViewProps) {
-  
+
   const handleMove = (poiId: string, direction: 'up' | 'down') => {
     const pois = [...dayItinerary.pointsOfInterest];
     const index = pois.findIndex(p => p.id === poiId);
@@ -28,6 +29,9 @@ export default function DailyItineraryView({ dayItinerary, onUpdateDayItinerary,
   };
 
   const handleDeletePoi = (poiId: string) => {
+    // add custom confirmation dialog
+    if (!confirm('Are you sure you want to delete this point of interest?')) return;
+
     const updatedPois = dayItinerary.pointsOfInterest.filter(p => p.id !== poiId);
     onUpdateDayItinerary({ ...dayItinerary, pointsOfInterest: updatedPois });
   };
@@ -37,9 +41,8 @@ export default function DailyItineraryView({ dayItinerary, onUpdateDayItinerary,
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-xl font-semibold font-headline text-primary">Day {dayItinerary.day}</h3>
         {isEditingPlan && (
-          <Button variant="outline" size="sm" onClick={() => onAddPoiClick(dayItinerary.day)}>
-            <PlusCircle className="w-4 h-4 mr-2" /> Add POI to Day {dayItinerary.day}
-          </Button>
+          <ActionButton isSecondary title={`Add POI to Day ${dayItinerary.day}`} onClick={() => onAddPoiClick(dayItinerary.day)} icon={<PlusCircle className="w-4 h-4 mr-2" />} />
+
         )}
       </div>
       {dayItinerary.pointsOfInterest.length === 0 ? (
@@ -62,12 +65,12 @@ export default function DailyItineraryView({ dayItinerary, onUpdateDayItinerary,
           ))}
         </div>
       )}
-       {/* Placeholder for drag-and-drop hint if not implemented with buttons */}
-       {isEditingPlan && dayItinerary.pointsOfInterest.length > 1 && (
-         <p className="text-xs text-muted-foreground mt-3 text-center">
-           Use the arrow buttons to reorder points of interest. Full drag & drop coming soon!
-         </p>
-       )}
+      {/* Placeholder for drag-and-drop hint if not implemented with buttons */}
+      {isEditingPlan && dayItinerary.pointsOfInterest.length > 1 && (
+        <p className="text-xs text-muted-foreground mt-3 text-center">
+          Use the arrow buttons to reorder points of interest. Full drag & drop coming soon!
+        </p>
+      )}
     </div>
   );
 }

@@ -196,9 +196,6 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 p-4 bg-card rounded-2xl shadow">
         <div>
           <ActionButton title="Back" isBack isSecondary onClick={() => router.back()} />
-          {/* <Button variant="secondary" onClick={() => router.back()} className="mb-4 md:mb-0">
-            <ChevronLeft className="w-4 h-4 mr-2" /> Back
-          </Button> */}
           <h2 className="text-3xl font-bold font-headline text-foreground mt-2">{plan.name}</h2>
           <p className="text-muted-foreground">
             {plan.destination} - {plan.duration} days
@@ -206,9 +203,7 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
         </div>
         <div className="flex gap-2 flex-wrap">
           {currentMode === 'new' && (
-            <Button onClick={() => setIsSavePlanDialogOpen(true)} variant="default">
-              <Save className="w-4 h-4 mr-2" /> Save This Plan
-            </Button>
+            <ActionButton isSave title="Save This Plan" onClick={() => setIsSavePlanDialogOpen(true)} />
           )}
           {currentMode === 'existing' && (
             <ActionButton title="Edit Plan" onClick={toggleEditMode} icon={<Edit className="w-4 h-4 mr-2" />} />
@@ -222,10 +217,10 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
           {(currentMode === 'existing' || currentMode === 'editing-existing') && onDeletePlan && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                {/* <ActionButton title="Delete Plan" icon={<Trash2 className="w-4 h-4 mr-2" />} isDestructive /> */}
-                <Button variant="destructive">
+                <ActionButton title="Delete Plan" isDelete />
+                {/* <Button variant="destructive">
                   <Trash2 className="w-4 h-4 mr-2" /> Delete
-                </Button>
+                </Button> */}
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -260,23 +255,9 @@ export default function PlanDetailsView({ initialPlan, mode: initialMode, onDele
       )}
 
       {/* View type toggle buttons */}
-      <div className="flex justify-center gap-2 my-6">
-        <Button
-          variant={viewType === 'list' ? 'default' : 'secondary'}
-          onClick={() => setViewType('list')}
-          aria-pressed={viewType === 'list'}
-        >
-          <List className="w-4 h-4 mr-2" />
-          Route View
-        </Button>
-        <Button
-          variant={viewType === 'map' ? 'default' : 'secondary'}
-          onClick={() => setViewType('map')}
-          aria-pressed={viewType === 'map'}
-        >
-          <MapIcon className="w-4 h-4 mr-2" />
-          Map View
-        </Button>
+      <div className="flex justify-center gap-4 my-6">
+        <ActionButton title="Route View" isRoute isSecondary={viewType === 'map'} onClick={() => setViewType('list')} />
+        <ActionButton title="Map View" isMap isSecondary={viewType === 'list'} onClick={() => setViewType('map')} />
       </div>
 
       {/* Conditional rendering based on viewType */}

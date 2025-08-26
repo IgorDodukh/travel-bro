@@ -13,6 +13,7 @@ import { handleGeneratePlansAction, type NewTripFormActionState } from '@/app/ne
 import { useToast } from '@/hooks/use-toast';
 import { useApiLimit } from '@/contexts/ApiLimitContext';
 import { LimitExceededPopup } from '@/components/LimitExceedsPopup';
+import ActionButton from '@/components/ui/action-button';
 
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
@@ -187,22 +188,12 @@ export default function GeneratedPlansPage() {
       </div>
 
       <div className="text-center mt-12 flex flex-wrap justify-center gap-4">
-        <Button variant="outline" onClick={handleBackToPreferences} disabled={isRegenerating}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Preferences
-        </Button>
-        <Button onClick={handleRegenerate} disabled={isRegenerating}>
-          {isRegenerating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 h-4 w-4" />
-          )}
-          Generate Again
-        </Button>
+        <ActionButton isBack isSecondary title="Back to Preferences" onClick={handleBackToPreferences} disabled={isRegenerating} />
+        <ActionButton isRefresh title="Generate Again" onClick={handleRegenerate} disabled={isRegenerating} />
       </div>
-      <LimitExceededPopup 
-        isOpen={showLimitPopup} 
-        onClose={() => setShowLimitPopup(false)} 
+      <LimitExceededPopup
+        isOpen={showLimitPopup}
+        onClose={() => setShowLimitPopup(false)}
       />
     </div>
   );
