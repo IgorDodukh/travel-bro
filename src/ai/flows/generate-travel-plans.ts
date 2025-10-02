@@ -1,11 +1,16 @@
 'use server';
-
-/**
- * Simplified version for debugging - falls back to AI-generated coordinates if geocoding fails
- */
-
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+
+const GooglePlaceDetailsSchema = z.object({
+  formatted_phone_number: z.string().optional(),
+  website: z.string().optional(),
+  photos: z.array(z.string()).optional().describe('An array of fully formed image URLs.'),
+  rating: z.number().optional(),
+  types: z.array(z.string()).optional(),
+  user_ratings_total: z.number().optional(),
+  place_id: z.string().optional(),
+});
 
 const GenerateTravelPlansInputSchema = z.object({
   destination: z.string().describe('The destination for the travel plan.'),
@@ -29,10 +34,12 @@ const AiPointOfInterestSchema = z.object({
   category: z.array(z.string()).describe('The category of the point of interest.'),
 });
 
+const FinalPointOfInterestSchema = AiPointOfInterestSchema.merge(GooglePlaceDetailsSchema);
+
 const TravelPlanSchema = z.object({
   planName: z.string().describe('Name of the travel plan.'),
   description: z.string().describe('Description of the travel plan.'),
-  pointsOfInterest: z.array(AiPointOfInterestSchema).describe('A list of points of interest with coordinates.'),
+  pointsOfInterest: z.array(FinalPointOfInterestSchema).describe('A list of points of interest with coordinates.'),
 });
 
 const GenerateTravelPlansOutputSchema = z.object({
@@ -41,66 +48,83 @@ const GenerateTravelPlansOutputSchema = z.object({
 
 export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSchema>;
 export type GenerateTravelPlansOutput = z.infer<typeof GenerateTravelPlansOutputSchema>;
-// FIX: Create a TypeScript type from the Zod schema
 export type AiPointOfInterest = z.infer<typeof AiPointOfInterestSchema>;
 
+const GOOGLE_API_KEY = process.env.GOOGLE_GEOCODING_API_KEY!;
 
-// Simplified geocoding function
-async function simpleGeocode(
-  locationName: string,
-  city: string,
-  country: string
-): Promise<{ lat: number; lon: number } | null> {
-  locationName = normalizePlaceName(locationName);
-  const formats = [
-    `${locationName}, ${city}, ${country}`,
-    `${locationName}, ${country}`,
-    `${locationName}, ${city}`,
-    `${city}, ${locationName}, ${country}`,
-    `${locationName}`,
-  ];
-
-  for (const format of formats) {
-    const query = encodeURIComponent(format);
-    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
-
-    console.log(`🔍 Trying geocode ${locationName}: ${url}`);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // respect rate limits
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'TravelPlannerApp/1.0',
-        },
-      });
-
-      if (!response.ok) {
-        console.error(`⚠️ Geocoding HTTP error: ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
-
-      if (data && data.length > 0) {
-        return {
-          lat: parseFloat(data[0].lat),
-          lon: parseFloat(data[0].lon),
-        };
-      }
-    } catch (error) {
-      console.error(`❌ Geocoding error for ${format}:`, error);
+const findPlaceId = async (poi: { name: string; lat: number; lng: number; }): Promise<string | null> => {
+  // Strategy 1: Text search (most reliable for name + location)
+  try {
+    const query = encodeURIComponent(`"${poi.name}" near ${poi.lat},${poi.lng}`);
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${GOOGLE_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.status === 'OK' && data.results.length > 0) {
+      console.log(`✓ [Place ID] Found '${data.results[0].name}' via Text Search for '${poi.name}'`);
+      return data.results[0].place_id;
     }
+  } catch (error) {
+    console.error(`[Place ID] Text search failed for ${poi.name}:`, error);
   }
 
-  console.warn(`⛔ Failed to geocode after all attempts: ${locationName}`);
+  // Strategy 2: Nearby search (good fallback)
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${poi.lat},${poi.lng}&radius=100&keyword=${encodeURIComponent(poi.name)}&key=${GOOGLE_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.status === 'OK' && data.results.length > 0) {
+      console.log(`✓ [Place ID] Found '${data.results[0].name}' via Nearby Search for '${poi.name}'`);
+      return data.results[0].place_id;
+    }
+  } catch (error) {
+    console.error(`[Place ID] Nearby search failed for ${poi.name}:`, error);
+  }
+
+  console.warn(`✗ [Place ID] Could not find Place ID for '${poi.name}'.`);
   return null;
-}
+};
+
+const fetchPlaceDetails = async (placeId: string): Promise<z.infer<typeof GooglePlaceDetailsSchema> | null> => {
+  try {
+    const fields = [
+      'place_id', 'name', 'formatted_phone_number', 'website', 'photos',
+      'rating', 'user_ratings_total', 'types'
+    ].join(',');
+
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status === 'OK' && data.result) {
+      const result = data.result;
+      let photoUrls: string[] = [];
+
+      if (result.photos && result.photos.length > 0) {
+        photoUrls = result.photos.slice(0, 5).map((photo: any) =>
+          `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photoreference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`
+        );
+      }
+      return {
+        formatted_phone_number: result.international_phone_number || result.formatted_phone_number,
+        website: result.website,
+        photos: photoUrls,
+        // rating: result.rating, // COMMENTED OUT, NO USE CASE YET
+        // user_ratings_total: result.user_ratings_total,  // COMMENTED OUT, NO USE CASE YET
+        types: result.types,
+        // place_id: result.place_id,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error(`[Details] Error fetching details for Place ID ${placeId}:`, error);
+    return null;
+  }
+};
 
 async function geocodeWithGoogle(
   locationName: string,
   address: string
 ): Promise<{ lat: number; lon: number } | null> {
-  const GOOGLE_API_KEY = process.env.GOOGLE_GEOCODING_API_KEY!;
   const query = encodeURIComponent(address);
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=${GOOGLE_API_KEY}`;
 
@@ -120,14 +144,6 @@ async function geocodeWithGoogle(
     console.error(`❌ Google geocoding error for ${address}:`, error);
   }
   return null;
-}
-
-function normalizePlaceName(name: string) {
-  return name
-    .trim()
-    .replace(/[^\w\s]/gi, '') // remove special chars
-    .replace(/\s{2,}/g, ' ')   // collapse extra spaces
-    .toLowerCase();
 }
 
 // Two-step approach: Generate POIs first, then get coordinates
@@ -151,7 +167,7 @@ const generatePOIsPrompt = ai.definePrompt({
       }))
     })
   },
-  prompt: `As an experienced travel guide, generate 3 travel plans for {{{destination}}} with the following preferences:
+  prompt: `As an experienced travel guide, generate 2 travel plans for {{{destination}}} with the following preferences:
 
 Duration: {{{duration}}} days
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
@@ -159,7 +175,7 @@ Attraction Type: {{{attractionType}}}
 
 IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
-For each of the 3 travel plans you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
+For each of 2 generated travel plans you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
 
 CRITICAL RULES:
 {{#if includeSurroundings}}
@@ -179,7 +195,7 @@ For each plan, provide:
      - address: EXACT address (as found on Google Maps)
      - time: recommended average time to spend on this location according to the internet feedbacks in minutes
      - day: The day number (from 1 to {{{duration}}}) for this point of interest. This is crucial for organizing the plan.
-     - cost: the cost of visiting this location. For example price of the ticket, etc. Use actual information from the official sources. If no cost set to "Free". If no information was found say "Not found"
+     - cost: the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
      - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Focus on well-known, easily findable locations. Use precise, official names.
@@ -262,8 +278,8 @@ const generatePOIsFlow = ai.defineFlow(
     const output = response.output;
 
     if (!output || !output.travelPlans) {
-        console.error('!!! AI failed to generate valid POIs. Output was null or empty.');
-        return { travelPlans: [] }; 
+      console.error('!!! AI failed to generate valid POIs. Output was null or empty.');
+      return { travelPlans: [] };
     }
 
     console.debug('=== Generated POIs ===', JSON.stringify(output, null, 2));
@@ -276,7 +292,7 @@ const enhancedPrompt = ai.definePrompt({
   name: 'enhancedTravelPlansPrompt',
   input: { schema: GenerateTravelPlansInputSchema },
   output: { schema: GenerateTravelPlansOutputSchema },
-  prompt: `You are a travel expert with access to precise GPS coordinates. Generate 3 travel plans for {{{destination}}}.
+  prompt: `You are a travel expert with access to precise GPS coordinates. Generate 2 travel plans for {{{destination}}}.
 
 Trip Details:
 - Duration: {{{duration}}} days
@@ -288,7 +304,7 @@ Also include noteworthy attractions in the surrounding areas, up to 200km away.
 
 IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
-For each of the 3 travel plans you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
+For each of 2 generated travel plan you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
 
 CRITICAL RULES:
 - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
@@ -307,7 +323,7 @@ For each plan:
    - longitude: PRECISE coordinate (e.g., -9.2158 NOT -9.22)
    - day: The day number (from 1 to {{{duration}}}) for this point of interest.
    - time: Recommended time to spend in minutes.
-   - cost: Estimated cost. Use "Free" if no cost, or "Not found" if unknown.
+   - cost: the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
    - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Only include locations where you're confident of exact coordinates.
@@ -348,79 +364,59 @@ const enhancedFlow = ai.defineFlow(
 
     // FIX: Added safety check to the primary flow
     if (!output || !output.travelPlans) {
-        console.error('!!! AI (enhancedFlow) failed to generate valid plans. Output was null or empty.');
-        return { travelPlans: [] }; 
+      console.error('!!! AI (enhancedFlow) failed to generate valid plans. Output was null or empty.');
+      return { travelPlans: [] };
     }
-    
+
     return output;
   }
 );
 
 // Main function with multiple fallback strategies
 export async function generateTravelPlans(input: GenerateTravelPlansInput): Promise<GenerateTravelPlansOutput> {
-  console.log('=== Starting Travel Plan Generation ===');
-  console.log('Input:', input);
+  console.log('=== 1. Starting AI Travel Plan Generation ===');
 
-  try {
-    // Strategy 1 (NEW PRIMARY): Enhanced AI prompt with coordinates
-    console.debug('Trying Strategy 1: Enhanced AI prompt with built-in coordinates...');
-    const enhancedResult = await enhancedFlow(input);
+  // Let the AI generate the base plan first.
+  const aiResult = await enhancedFlow(input);
 
-    if (enhancedResult?.travelPlans?.length > 0) {
-      console.debug('Strategy 1 succeeded');
-      return enhancedResult;
-    }
-
-    // Strategy 2 (NEW FALLBACK): Two-step process with parallel geocoding
-    console.error('Strategy 1 failed, trying Strategy 2: Two-step process with geocoding...');
-    const poisOnly = await generatePOIsFlow(input);
-
-    if (poisOnly?.travelPlans?.length > 0) {
-      const plansWithCoords = await Promise.all(
-        poisOnly.travelPlans.map(async (plan) => {
-          
-          const poisWithCoordsPromises = plan.pointsOfInterest.map(async (poi) => {
-            console.debug(`Geocoding: ${poi.name}`);
-            const coords = await geocodeWithGoogle(poi.name, poi.address);
-            if (coords) {
-              console.debug(`✓ Geocoded ${poi.name}: ${coords.lat}, ${coords.lon}`);
-              return {
-                ...poi,
-                latitude: coords.lat,
-                longitude: coords.lon,
-              };
-            }
-            console.error(`✗ Failed to geocode: ${poi.name}`);
-            return null;
-          });
-
-          const resolvedPois = await Promise.all(poisWithCoordsPromises);
-
-          return {
-            planName: plan.planName,
-            description: plan.description,
-            // FIX: Use the inferred TypeScript type for the assertion
-            pointsOfInterest: resolvedPois.filter(p => p !== null) as AiPointOfInterest[],
-          };
-        })
-      );
-
-      const validPlans = plansWithCoords.filter(plan => plan.pointsOfInterest.length > 0);
-
-      if (validPlans.length > 0) {
-        console.log('Strategy 2 succeeded');
-        return { travelPlans: validPlans };
-      }
-    }
-
-    throw new Error('All generation strategies failed to produce a valid plan.');
-
-  } catch (error) {
-    console.error('All strategies failed:', error);
-    let errorMessage = "An unexpected error occurred.";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
-    throw new Error(`Failed to generate travel plans: ${errorMessage}`);
+  if (!aiResult?.travelPlans?.length) {
+    console.error('!!! AI failed to generate any valid plans. Aborting.');
+    // You might want to try your fallback strategy here if needed
+    throw new Error('Failed to generate a base travel plan from the AI.');
   }
+
+  console.log('=== 2. AI Generation Successful. Starting Data Augmentation ===');
+
+  // Now, augment each POI with rich data from Google Places
+  const enrichedTravelPlans = await Promise.all(
+    aiResult.travelPlans.map(async (plan) => {
+
+      const enrichedPoisPromises = plan.pointsOfInterest.map(async (poi) => {
+        // Find the Place ID for the AI-generated POI
+        const placeId = await findPlaceId({ name: poi.name, lat: poi.latitude, lng: poi.longitude });
+
+        if (placeId) {
+          // If found, fetch the rich details
+          const details = await fetchPlaceDetails(placeId);
+          if (details) {
+            // Merge the original AI data with the new Google data
+            return { ...poi, ...details, cost: poi.cost.replace(/\n/g, '') };
+          }
+        }
+
+        // If anything fails, gracefully fall back to the original AI-generated data
+        return poi;
+      });
+
+      const resolvedPois = await Promise.all(enrichedPoisPromises);
+
+      return {
+        ...plan,
+        pointsOfInterest: resolvedPois,
+      };
+    })
+  );
+
+  console.log('=== 3. Data Augmentation Complete. Returning final plans. ===');
+  return { travelPlans: enrichedTravelPlans };
 }

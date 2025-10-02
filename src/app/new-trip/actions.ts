@@ -49,7 +49,6 @@ export async function handleGeneratePlansAction(
     }
 
     const aiInput: GenerateTravelPlansInput = validatedFields.data;
-    
     const generatedPlans = await generateTravelPlans(aiInput);
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {
