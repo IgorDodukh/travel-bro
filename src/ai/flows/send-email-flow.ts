@@ -54,7 +54,7 @@ const createEmailTemplate = (name: string, email: string, message: string) => {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>New Contact Form Submission</title>
+      <title>PlaPlan - New Contact Form Submission</title>
       <style>
         body {
           font-family: Arial, sans-serif;
@@ -104,7 +104,7 @@ const createEmailTemplate = (name: string, email: string, message: string) => {
     </head>
     <body>
       <div class="header">
-        <h2>New Contact Form Submission</h2>
+        <h2>PlaPlan - New Contact Form Submission</h2>
         <p>You have received a new message through your website contact form.</p>
       </div>
       
@@ -139,7 +139,7 @@ const createEmailTemplate = (name: string, email: string, message: string) => {
 // Plain text version for better compatibility
 const createTextTemplate = (name: string, email: string, message: string) => {
     return `
-New Contact Form Submission
+PlaPlan - New Contact Form Submission
 ==========================
 
 From: ${name}
@@ -184,7 +184,7 @@ const sendEmailFlow = ai.defineFlow(
                 from: `"${input.name}" <${CONTACT_EMAIL}>`, // Use your verified Brevo sender
                 to: CONTACT_EMAIL, // Your contact email
                 replyTo: input.email, // User can reply directly to the sender
-                subject: `New Contact Form Submission from ${input.name}`,
+                subject: `PlaPlan - New Contact Form Submission from ${input.name}`,
                 text: createTextTemplate(input.name, input.email, input.message),
                 html: createEmailTemplate(input.name, input.email, input.message),
             };
