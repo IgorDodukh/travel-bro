@@ -60,7 +60,6 @@ const findPlaceId = async (poi: { name: string; lat: number; lng: number; }): Pr
     const response = await fetch(url);
     const data = await response.json();
     if (data.status === 'OK' && data.results.length > 0) {
-      console.log(`✓ [Place ID] Found '${data.results[0].name}' via Text Search for '${poi.name}'`);
       return data.results[0].place_id;
     }
   } catch (error) {
@@ -73,7 +72,6 @@ const findPlaceId = async (poi: { name: string; lat: number; lng: number; }): Pr
     const response = await fetch(url);
     const data = await response.json();
     if (data.status === 'OK' && data.results.length > 0) {
-      console.log(`✓ [Place ID] Found '${data.results[0].name}' via Nearby Search for '${poi.name}'`);
       return data.results[0].place_id;
     }
   } catch (error) {
@@ -167,7 +165,7 @@ const generatePOIsPrompt = ai.definePrompt({
       }))
     })
   },
-  prompt: `As an experienced travel guide, generate 2 travel plans for {{{destination}}} with the following preferences:
+  prompt: `As an experienced travel guide, generate 1 travel plan for {{{destination}}} with the following preferences:
 
 Duration: {{{duration}}} days
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
@@ -175,7 +173,7 @@ Attraction Type: {{{attractionType}}}
 
 IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
-For each of 2 generated travel plans you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
+For each of 1 generated travel plans you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
 
 CRITICAL RULES:
 {{#if includeSurroundings}}
@@ -292,7 +290,7 @@ const enhancedPrompt = ai.definePrompt({
   name: 'enhancedTravelPlansPrompt',
   input: { schema: GenerateTravelPlansInputSchema },
   output: { schema: GenerateTravelPlansOutputSchema },
-  prompt: `You are a travel expert with access to precise GPS coordinates. Generate 2 travel plans for {{{destination}}}.
+  prompt: `You are a travel expert with access to precise GPS coordinates. Generate 1 travel plan for {{{destination}}}.
 
 Trip Details:
 - Duration: {{{duration}}} days
@@ -304,7 +302,7 @@ Also include noteworthy attractions in the surrounding areas, up to 200km away.
 
 IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
-For each of 2 generated travel plan you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
+For each of 1 generated travel plan you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
 
 CRITICAL RULES:
 - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
