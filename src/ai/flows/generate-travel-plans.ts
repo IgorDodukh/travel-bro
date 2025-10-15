@@ -181,6 +181,7 @@ CRITICAL RULES:
 {{/if}}
 - All fields for pointsOfInterest are mandatory. They should always be present with the value which is NOT null and NOT empty.
 - All locations MUST be grouped by days based on their position to each other. Group close locations into one day and order them by distance from each other to make a smooth journey but don't forget to split all journey into {{{duration}}} days.
+- Use input data language as the main language to use for travel plan details provided as the output. At the moment it can be English or Ukrainian. Apply language to planName, plan description, point of interest description, cost, category
 
 For each plan, provide:
 1. planName: A descriptive name
@@ -188,12 +189,12 @@ For each plan, provide:
 3. pointsOfInterest: A flat array containing locations for the entire trip.
    - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
    - For EACH point of interest, provide:
-     - name: EXACT official name (as found on Google Maps)
+     - name: (use language of input data) EXACT official name (as found on Google Maps)
      - description: Brief description
      - address: EXACT address (as found on Google Maps)
      - time: recommended average time to spend on this location according to the internet feedbacks in minutes
      - day: The day number (from 1 to {{{duration}}}) for this point of interest. This is crucial for organizing the plan.
-     - cost: the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
+     - cost: (use language of input data) the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
      - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Focus on well-known, easily findable locations. Use precise, official names.
@@ -309,19 +310,20 @@ CRITICAL RULES:
 - Provide EXACT coordinates (4+ decimal places) for well-known locations only.
 - All fields for pointsOfInterest are mandatory. They should always be present with the value which is NOT null and NOT empty.
 - All locations MUST be grouped by day based on their proximity to each other to create a logical daily route.
+- Use input data language as the main language to use for travel plan details provided as the output. At the moment it can be English or Ukrainian. Apply language to planName, plan description, point of interest description, cost, category
 
 For each plan:
 1. planName: Descriptive theme
 2. description: Craft a brief yet evocative description for a featured travel plan. The description should create a sense of place and experience, focusing on sensory details and the emotional journey rather than just listing facts. The tone should be inspiring and abstract, without explicitly naming locations. Focus on what a traveler will feel, see, and do. Keep it concise, aiming for up to 200 characters with spaces MAX, so it fits neatly into a mobile app UI.
 3. pointsOfInterest: A flat array of locations for the entire trip. For each location, provide:
-   - name: Official name as on Google Maps
+   - name: (use language of input data if applicable) Official name as on Google Maps
    - address: EXACT address (as found on Google Maps)
    - description: Brief, engaging description
    - latitude: PRECISE coordinate (e.g., 38.6919 NOT 38.69)
    - longitude: PRECISE coordinate (e.g., -9.2158 NOT -9.22)
    - day: The day number (from 1 to {{{duration}}}) for this point of interest.
    - time: Recommended time to spend in minutes.
-   - cost: the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
+   - cost: (use language of input data) the cost of visiting this location. For example price of the ticket, average cost of food, etc. Use actual information from the official sources. If no cost set to "Free". If the price is not fixed set to "Varies". If no information was found say "Not found". Supported format is [Value (additional details)]. Example: "Free", "€10", "$15 (adults only)", "£20", "Not found", "Varies"
    - category: According to the interests from this list categorize this location with the most relevant interest. This field should be a string array with at least interest categoty, in case there are more suitable interests in the list use all suitable ones. Interests to choose from: {{{interests}}}
 
 Only include locations where you're confident of exact coordinates.
