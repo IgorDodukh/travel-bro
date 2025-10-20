@@ -20,7 +20,7 @@ export default function MyPlansPage() {
 
   if (isLoading || !mounted) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <div className="min-h-screen flex flex-col items-center justify-center">
         <div className="relative">
           <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
           <Plane className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary animate-pulse" />
@@ -31,7 +31,7 @@ export default function MyPlansPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {/* Animated Background Orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse" />

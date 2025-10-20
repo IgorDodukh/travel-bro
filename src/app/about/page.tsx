@@ -14,7 +14,7 @@ export default function AboutPage() {
     }, []);
 
     return (
-        <div className="bg-background text-foreground">
+        <div className="text-foreground">
             {/* Animated Background Orbs (Consistent with HomePage) */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
                 <div className="absolute top-20 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse" />
@@ -124,9 +124,26 @@ export default function AboutPage() {
                 >
                     <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">Ready for Your Next Adventure?</h2>
                     <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-                        Let our AI co-pilot design your dream trip. It’s fast, free, and tailored just for you.
+                        Let us design your dream trip. It’s fast, free, and personalized just for you.
                     </p>
-                    <Button
+                    <div className="pt-2 pb-2 flex justify-center items-center">
+                        <Link
+                            href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Download on the App Store"
+                        >
+                            <Image
+                                src="assets/app-store-badge-black.svg"
+                                alt="Download on the App Store"
+                                width={140}
+                                height={44}
+                                className="hover:opacity-80 transition-opacity duration-300"
+                            />
+                        </Link>
+                    </div>
+
+                    {/* <Button
                         asChild
                         size="lg"
                         className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-6 px-12 rounded-2xl text-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-white"
@@ -135,7 +152,7 @@ export default function AboutPage() {
                             Plan Your Trip for Free
                             <ArrowRight className="w-5 h-5" />
                         </Link>
-                    </Button>
+                    </Button> */}
                 </section>
 
             </div>
