@@ -58,7 +58,7 @@ export default function HomePage() {
 
           {/* Main Heading */}
           <p className="text-4xl md:text-5xl text-foreground font-bold my-12 max-w-2xl mx-auto">
-            Transform your travels into unforgettable experience
+            Transform your travels into unforgettable experiences
           </p>
 
           {/* CTA Section */}
