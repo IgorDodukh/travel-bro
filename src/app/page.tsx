@@ -101,7 +101,7 @@ export default function HomePage() {
             {/* QR Code — only visible on desktop */}
             <div className="hidden md:flex flex-col items-center">
               <Image
-                src="/assets/qr.png" // generate and save your QR linking to the App Store
+                src="/assets/qr-code.png" // generate and save your QR linking to the App Store
                 alt="QR code to download PlaPlan"
                 width={120}
                 height={120}
