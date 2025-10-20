@@ -52,10 +52,22 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/50 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 w-fit mx-auto lg:mx-0">
+          <div className="relative inline-flex items-center w-fit mx-auto lg:mx-0 group">
+            {/* Gradient border */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-amber-500 to-primary rounded-full opacity-25 group-hover:opacity-60 transition duration-300 blur-sm"></div>
+
+            {/* Content */}
+            <div className="relative inline-flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-full px-4 py-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-sm font-medium bg-gradient-to-r from-primary via-amber-500 to-primary bg-clip-text text-transparent font-semibold">
+                AI-Powered Travel Planning
+              </span>
+            </div>
+          </div>
+          {/* <div className="inline-flex items-center gap-2 bg-white/50 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 w-fit mx-auto lg:mx-0">
             <Sparkles className="w-4 h-4 text-foreground" />
             <span className="text-sm font-medium text-foreground">AI-Powered Travel Planning</span>
-          </div>
+          </div> */}
 
           {/* Main Heading */}
           <p className="text-4xl md:text-5xl text-foreground font-bold my-12 max-w-2xl mx-auto">

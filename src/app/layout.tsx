@@ -21,6 +21,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script src="https://cdn.cookiehub.eu/c2/1045cff8.js"></script>
+        <script type="text/javascript">
+          {`
+          document.addEventListener("DOMContentLoaded", function(event) {
+            var cpm = { };
+            window.cookiehub.load(cpm);
+          });
+          `}
+        </script>
+
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
