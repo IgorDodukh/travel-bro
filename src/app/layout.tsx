@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { ApiLimitProvider } from '@/contexts/ApiLimitContext';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'PlaPlan - Your Personal Travel Assistant',
@@ -38,6 +39,7 @@ export default function RootLayout({
           <main className="flex-grow container mx-auto px-0 py-8 relative z-0">
             {children}
             <Analytics />
+            <SpeedInsights />
           </main>
 
           <Footer />
