@@ -63,6 +63,24 @@ export default function HomePage() {
           </p>
 
           {/* CTA Section */}
+
+          <div className="text-center">
+            <div className="flex flex-col sm:flex-row lg:flex-row xl:flex-row justify-center gap-3 sm:gap-8 mt-8 text-sm font-semibold text-muted-foreground pl-0 sm:pl-0 items-start sm:items-center">
+              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
+                Powered by AI
+              </span>
+              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '1s' }} />
+                Worldwide destinations
+              </span>
+              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
+                Mobile-friendly
+              </span>
+            </div>
+          </div>
+
           <div className="pt-12 pb-6 flex flex-col md:flex-row justify-center items-center gap-6">
             {/* App Store Button */}
             <Link
