@@ -34,7 +34,7 @@ export default function Header() {
       href: '/about',
       label: 'About',
       icon: Info,
-      description: 'About PlaPlan'
+      description: 'About PlaPlan.io'
     },
   ];
 
@@ -94,7 +94,7 @@ export default function Header() {
                   className={`
                     relative group flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-300
                     ${isActive
-                      ? 'text-primary font-semibold hover:text-primary/70'
+                      ? 'text-primary font-semibobld text-xl hover:text-primary/70'
                       : 'text-foreground/70 hover:text-foreground'
                     }
                   `}

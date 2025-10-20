@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Calendar, Plane, Sparkles, Globe, Compass, Mountain, Camera } from 'lucide-react';
+import ReviewsCarousel from '@/components/ReviewCarousel';
 
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -47,7 +48,7 @@ export default function HomePage() {
         <div className="absolute bottom-20 right-1/4 w-64 h-64 bg-primary/4 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
       </div>
 
-      <div className="relative z-10 container mx-auto px-6 py-12 max-w-7xl">
+      <div className="relative z-10 container mx-auto px-6 py-2 max-w-7xl">
         {/* Hero Section */}
         <section className="text-center">
           {/* Badge */}
@@ -62,24 +63,8 @@ export default function HomePage() {
           </p>
 
           {/* CTA Section */}
-          <div className="text-center">
-            <div className="flex flex-col sm:flex-row lg:flex-row xl:flex-row justify-center gap-3 sm:gap-8 mt-8 text-sm font-semibold text-muted-foreground pl-0 sm:pl-0 items-start sm:items-center">
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
-                Powered by AI
-              </span>
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '1s' }} />
-                Worldwide destinations
-              </span>
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
-                Mobile-friendly
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-12 pb-6 flex justify-center items-center">
+          <div className="pt-12 pb-6 flex flex-col md:flex-row justify-center items-center gap-6">
+            {/* App Store Button */}
             <Link
               href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
               target="_blank"
@@ -87,13 +72,27 @@ export default function HomePage() {
               aria-label="Download on the App Store"
             >
               <Image
-                src="assets/app-store-badge-black.svg"
+                src="/assets/app-store-badge-black.svg"
                 alt="Download on the App Store"
                 width={160}
                 height={44}
                 className="hover:opacity-80 transition-opacity duration-300"
               />
             </Link>
+
+            {/* QR Code — only visible on desktop */}
+            <div className="hidden md:flex flex-col items-center">
+              <Image
+                src="/assets/qr.png" // generate and save your QR linking to the App Store
+                alt="QR code to download PlaPlan"
+                width={120}
+                height={120}
+                className="rounded-lg shadow-md"
+              />
+              <span className="text-xs text-muted-foreground mt-2">
+                Scan to download on iPhone
+              </span>
+            </div>
           </div>
         </section>
 
@@ -184,11 +183,11 @@ export default function HomePage() {
         <section className="mt-20 mb-20 relative">
           <div className="text-center mb-12">
             <p className="text-2xl md:text-3xl text-black/80 font-semibold mb-2">
-              See PlaPlan in Action
+              See PlaPlan.io in Action
             </p>
             <hr className="w-20 h-1 mx-auto my-2 bg-primary border-0 rounded-lg md:my-2" />
             <p className="text-sm md:text-md text-black/60 max-w-2xl mx-auto">
-              Discover how PlaPlan transforms your travel planning experience with intelligent features and beautiful design
+              Discover how PlaPlan.io transforms your travel planning experience with intelligent features and beautiful design
             </p>
           </div>
 
@@ -346,6 +345,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        {/* <ReviewsCarousel /> */}
       </div>
 
       <style jsx>{`

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { useEffect, useState, useActionState } from 'react';
 import GeneratedPlanCard from '@/components/GeneratedPlanCard';
 import type { GenerateTravelPlansOutput, NewTripFormState } from '@/lib/types';
@@ -19,6 +19,9 @@ const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 
 export default function GeneratedPlansPage() {
+  redirect('/');
+  return null;
+
   const { canMakeApiCall, useApiCall, remainingCalls, getTimeUntilReset } = useApiLimit();
   const router = useRouter();
   const { toast } = useToast();
@@ -162,39 +165,39 @@ export default function GeneratedPlansPage() {
     );
   }
 
-  if (!generatedPlansOutput || !generatedPlansOutput.travelPlans || generatedPlansOutput.travelPlans.length === 0 || !formInput) {
-    return (
-      <div className="text-center py-10">
-        <h2 className="text-2xl font-semibold text-primary mb-4">No Plans Generated</h2>
-        <p className="text-muted-foreground mb-6">We couldn't generate any plans with the provided preferences. Please try again with different options.</p>
-        <Button onClick={() => router.push('/new-trip')}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Form
-        </Button>
-      </div>
-    );
-  }
+  // if (!generatedPlansOutput || !generatedPlansOutput.travelPlans || generatedPlansOutput.travelPlans.length === 0 || !formInput) {
+  //   return (
+  //     <div className="text-center py-10">
+  //       <h2 className="text-2xl font-semibold text-primary mb-4">No Plans Generated</h2>
+  //       <p className="text-muted-foreground mb-6">We couldn't generate any plans with the provided preferences. Please try again with different options.</p>
+  //       <Button onClick={() => router.push('/new-trip')}>
+  //         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Form
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
-  return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold font-headline text-primary">Here Are Your Personalized Travel Plans!</h2>
-        <p className="text-lg text-muted-foreground">Choose one to view details and customize further, or go back to refine your search.</p>
-      </div>
+  // return (
+  //   <div className="space-y-8">
+  //     <div className="text-center mb-8">
+  //       <h2 className="text-3xl font-bold font-headline text-primary">Here Are Your Personalized Travel Plans!</h2>
+  //       <p className="text-lg text-muted-foreground">Choose one to view details and customize further, or go back to refine your search.</p>
+  //     </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {generatedPlansOutput.travelPlans.map((plan, index) => (
-          <GeneratedPlanCard key={index} plan={plan} index={index} />
-        ))}
-      </div>
+  //     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  //       {generatedPlansOutput.travelPlans.map((plan, index) => (
+  //         <GeneratedPlanCard key={index} plan={plan} index={index} />
+  //       ))}
+  //     </div>
 
-      <div className="text-center mt-12 flex flex-wrap justify-center gap-4">
-        <ActionButton isBack isSecondary title="Back to Preferences" onClick={handleBackToPreferences} disabled={isRegenerating} />
-        <ActionButton isRefresh title="Generate Again" onClick={handleRegenerate} disabled={isRegenerating} />
-      </div>
-      <LimitExceededPopup
-        isOpen={showLimitPopup}
-        onClose={() => setShowLimitPopup(false)}
-      />
-    </div>
-  );
+  //     <div className="text-center mt-12 flex flex-wrap justify-center gap-4">
+  //       <ActionButton isBack isSecondary title="Back to Preferences" onClick={handleBackToPreferences} disabled={isRegenerating} />
+  //       <ActionButton isRefresh title="Generate Again" onClick={handleRegenerate} disabled={isRegenerating} />
+  //     </div>
+  //     <LimitExceededPopup
+  //       isOpen={showLimitPopup}
+  //       onClose={() => setShowLimitPopup(false)}
+  //     />
+  //   </div>
+  // );
 }

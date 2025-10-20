@@ -68,10 +68,10 @@ export default function AboutPage() {
                         <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">From Frustration to Freedom</h2>
                         <div className="space-y-4 text-muted-foreground">
                             <p>
-                                Like many travelers, our founders were tired of juggling countless browser tabs, messy spreadsheets, and generic travel blogs. The magic of planning a trip was lost in the chaos of logistics.
+                                Like many travelers, I tired of juggling countless browser tabs, messy spreadsheets, and generic travel blogs. The magic of planning a trip was lost in the chaos of logistics.
                             </p>
                             <p>
-                                We dreamed of a smarter way—a single, intuitive platform that could understand our travel style and build a complete, optimized itinerary in minutes. That dream became this app, your new AI travel companion.
+                                I dreamed of a smarter way - a single, intuitive platform that could understand our travel style and build a complete, optimized itinerary in minutes. That dream became this app, your new AI travel companion.
                             </p>
                         </div>
                     </div>
@@ -114,6 +114,64 @@ export default function AboutPage() {
                             <h3 className="font-semibold text-foreground mb-1 text-lg">Effortless Simplicity</h3>
                             <p className="text-sm text-muted-foreground">Our design philosophy is simple: powerful technology should feel invisible, creating a planning process that is fluid, intuitive, and fun.</p>
                         </div>
+                    </div>
+                </section>
+
+                {/* Our Founders Section */}
+                <section className="mb-16 md:mb-24">
+                    <h2
+                        className="text-3xl font-bold text-foreground mb-12 tracking-tight text-center opacity-0 animate-fadeInUp"
+                        style={{ animationDelay: '700ms', animationFillMode: 'forwards' }}
+                    >
+                        Meet Our Team
+                    </h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-8 md:gap-12 max-w-4xl mx-auto">
+                        {/* Founder 1 - You */}
+                        <div
+                            className="flex flex-col items-center opacity-0 animate-fadeInUp"
+                            style={{ animationDelay: '800ms', animationFillMode: 'forwards' }}
+                        >
+                            <div className="relative mb-6 w-full max-w-xs">
+                                <div className="aspect-square overflow-hidden rounded-3xl border-2 border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                    <Image
+                                        src="/assets/founders/ihor.jpg"
+                                        alt="You - SEO and Founder"
+                                        width={400}
+                                        height={400}
+                                        className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                                    />
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground mb-2">Ihor</h3>
+                            <p className="text-sm font-semibold text-primary mb-3">SEO & Founder</p>
+                            <p className="text-center text-muted-foreground text-sm leading-relaxed w-[80%] mx-auto">
+                                Visionary strategist driving our growth and ensuring every traveler discovers PlaPlan. Your passion for optimizing travel experiences extends from search engines to real-world adventures.
+                            </p>
+                        </div>
+
+                        {/* Founder 2 - Lenn */}
+                        {/* <div
+                            className="flex flex-col items-center opacity-0 animate-fadeInUp"
+                            style={{ animationDelay: '900ms', animationFillMode: 'forwards' }}
+                        >
+                            <div className="relative mb-6 w-full max-w-xs">
+                                <div className="aspect-square overflow-hidden rounded-2xl border-2 border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
+                                    <Image
+                                        src="/assets/founders/lenn.jpg"
+                                        alt="Lenn - Inspiration Manager"
+                                        width={400}
+                                        height={400}
+                                        className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                                    />
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground mb-2">Lenn</h3>
+                            <p className="text-sm font-semibold text-primary mb-3">Inspiration Manager</p>
+                            <p className="text-center text-muted-foreground text-sm leading-relaxed">
+                                Creative force behind PlaPlan's travel ideas. Lenn transforms wanderlust into actionable itineraries, bringing authentic experiences to life and ensuring every journey tells a unique story.
+                            </p>
+                        </div> */}
                     </div>
                 </section>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { redirect, useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import PlanDetailsView from '@/components/PlanDetailsView';
 import type { TravelPlan } from '@/lib/types';
@@ -11,6 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
 export default function SavedPlanPage() {
+  redirect('/');
+  return null;
+
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
@@ -55,7 +58,7 @@ export default function SavedPlanPage() {
 
   if (error) {
     return (
-       <div className="text-center py-10">
+      <div className="text-center py-10">
         <Card className="max-w-md mx-auto shadow-lg">
           <CardHeader>
             <CardTitle className="text-destructive">Oops! Plan Not Found.</CardTitle>
@@ -75,8 +78,8 @@ export default function SavedPlanPage() {
     // This case should ideally be covered by error state, but as a fallback:
     return <p>Plan could not be loaded.</p>;
   }
-  
-  return (
-    <PlanDetailsView initialPlan={plan} mode="existing" onDeletePlan={handleDeletePlan} />
-  );
+
+  // return (
+  //   <PlanDetailsView initialPlan={plan} mode="existing" onDeletePlan={handleDeletePlan} />
+  // );
 }

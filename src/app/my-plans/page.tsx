@@ -5,8 +5,12 @@ import TravelPlanCard from '@/components/TravelPlanCard';
 import type { TravelPlan } from '@/lib/types';
 import { getSavedTravelPlans } from '@/lib/localStorageUtils';
 import { MapPin, Calendar, Plane, Sparkles, Globe } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
 export default function MyPlansPage() {
+  redirect('/');
+  return null;
+
   const [savedPlans, setSavedPlans] = useState<TravelPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
