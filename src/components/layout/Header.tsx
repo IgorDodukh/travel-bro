@@ -126,7 +126,7 @@ export default function Header() {
               <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
             </Link> */}
             <Link
-              href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+              href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_header&mt=8"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Download on the App Store"
@@ -139,7 +139,7 @@ export default function Header() {
           </nav>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={toggleMobileMenu}
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-xl bg-card border border-border hover:bg-accent/50 transition-colors duration-200"
             aria-label="Toggle mobile menu"
@@ -198,7 +198,7 @@ export default function Header() {
                   <span>Plan New Trip</span>
                 </Link> */}
                 <Link
-                  href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+                  href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_header&mt=8"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={closeMobileMenu}

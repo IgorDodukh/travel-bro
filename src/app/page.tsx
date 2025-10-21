@@ -107,7 +107,7 @@ export default function HomePage() {
             </div>
             {/* App Store Button */}
             <Link
-              href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+              href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_main&mt=8"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Download on the App Store"
@@ -298,7 +298,7 @@ export default function HomePage() {
           {/* Optional: Call-to-Action */}
           <div className="text-center mt-12">
             <Link
-              href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+              href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_download&mt=8"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 bg-primary hover:bg-primary/90 text-white font-bold py-4 px-8 rounded-2xl text-base shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
