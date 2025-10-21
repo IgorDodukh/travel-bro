@@ -18,18 +18,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script src="https://cdn.cookiehub.eu/c2/1045cff8.js"></script>
-        <script type="text/javascript">
-          {`
-          document.addEventListener("DOMContentLoaded", function(event) {
-            var cpm = { };
-            window.cookiehub.load(cpm);
-          });
-          `}
-        </script>
+        {isProduction && (
+          <>
+            <script src="https://cdn.cookiehub.eu/c2/1045cff8.js"></script>
+            <script
+              type="text/javascript"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  document.addEventListener("DOMContentLoaded", function(event) {
+                    var cpm = { };
+                    window.cookiehub.load(cpm);
+                  });
+                `,
+              }}
+            />
+          </>
+        )}
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

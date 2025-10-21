@@ -93,7 +93,18 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="pt-12 pb-6 flex flex-col md:flex-row justify-center items-center gap-6">
+          <div className="pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
+
+            {/* QR Code — only visible on desktop */}
+            <div className="hidden md:flex flex-col items-center">
+              <Image
+                src="/assets/qr-code.png" // generate and save your QR linking to the App Store
+                alt="QR code to download PlaPlan"
+                width={120}
+                height={120}
+                className="rounded-lg shadow-md"
+              />
+            </div>
             {/* App Store Button */}
             <Link
               href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
@@ -109,20 +120,9 @@ export default function HomePage() {
                 className="hover:opacity-80 transition-opacity duration-300"
               />
             </Link>
-
-            {/* QR Code — only visible on desktop */}
-            <div className="hidden md:flex flex-col items-center">
-              <Image
-                src="/assets/qr-code.png" // generate and save your QR linking to the App Store
-                alt="QR code to download PlaPlan"
-                width={120}
-                height={120}
-                className="rounded-lg shadow-md"
-              />
-              <span className="text-xs text-muted-foreground mt-2">
-                Scan to download on iPhone
-              </span>
-            </div>
+            <span className="text-xs text-muted-foreground">
+              Free to download • Try premium features for free
+            </span>
           </div>
         </section>
 
@@ -344,7 +344,7 @@ export default function HomePage() {
                   animationDelay: `${3 * 100}ms`,
                   animationFillMode: 'forwards'
                 }}>
-                <Calendar className="w-8 h-8 text-primary mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
+                <Calendar className="w-8 h-8 text-primary mx-auto mb-3 group-hover:scale-110 group-hover: transition-transform duration-300" />
                 <h3 className="font-semibold text-foreground mb-1">AI Planning</h3>
                 <p className="text-sm text-muted-foreground">Optimized travel routes</p>
               </div>
