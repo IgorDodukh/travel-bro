@@ -135,7 +135,7 @@ export default function AboutPage() {
                             <div className="relative mb-6 w-full max-w-xs">
                                 <div className="aspect-square overflow-hidden rounded-3xl border-2 border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
                                     <Image
-                                        src="/assets/founders/ihor.jpg"
+                                        src="/assets/founders/ihor.jpeg"
                                         alt="You - SEO and Founder"
                                         width={400}
                                         height={400}
