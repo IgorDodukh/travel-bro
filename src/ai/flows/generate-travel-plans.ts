@@ -10,6 +10,8 @@ const GooglePlaceDetailsSchema = z.object({
   types: z.array(z.string()).optional(),
   user_ratings_total: z.number().optional(),
   place_id: z.string().optional(),
+  latitude: z.number(),
+  longitude: z.number(),
 });
 
 const GenerateTravelPlansInputSchema = z.object({
@@ -86,7 +88,7 @@ const fetchPlaceDetails = async (placeId: string): Promise<z.infer<typeof Google
   try {
     const fields = [
       'place_id', 'name', 'formatted_phone_number', 'website', 'photos',
-      'rating', 'user_ratings_total', 'types'
+      'rating', 'user_ratings_total', 'types', 'geometry/location'
     ].join(',');
 
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_API_KEY}`;
@@ -95,6 +97,7 @@ const fetchPlaceDetails = async (placeId: string): Promise<z.infer<typeof Google
 
     if (data.status === 'OK' && data.result) {
       const result = data.result;
+      console.log(`✓ [Details] Fetched details for Place ID ${placeId}: ${JSON.stringify(result, null, 2)}`);
       let photoUrls: string[] = [];
 
       if (result.photos && result.photos.length > 0) {
@@ -106,6 +109,8 @@ const fetchPlaceDetails = async (placeId: string): Promise<z.infer<typeof Google
         formatted_phone_number: result.international_phone_number || result.formatted_phone_number,
         website: result.website,
         photos: photoUrls,
+        latitude: result.geometry?.location?.lat,
+        longitude: result.geometry?.location?.lng,
         // rating: result.rating, // COMMENTED OUT, NO USE CASE YET
         // user_ratings_total: result.user_ratings_total,  // COMMENTED OUT, NO USE CASE YET
         types: result.types,
@@ -399,6 +404,7 @@ export async function generateTravelPlans(input: GenerateTravelPlansInput): Prom
           // If found, fetch the rich details
           const details = await fetchPlaceDetails(placeId);
           if (details) {
+            console.log(`✓ [Enrichment] Successfully enriched POI: ${JSON.stringify(poi)} with Place ID: ${placeId}`);
             // Merge the original AI data with the new Google data
             return { ...poi, ...details, cost: poi.cost.replace(/\n/g, '') };
           }
