@@ -136,7 +136,7 @@ export default function AboutPage() {
                                 <div className="aspect-square overflow-hidden rounded-3xl border-2 border-border shadow-lg hover:shadow-xl transition-shadow duration-300">
                                     <Image
                                         src="/assets/founders/ihor.jpeg"
-                                        alt="You - SEO and Founder"
+                                        alt="You - CEO and Founder"
                                         width={400}
                                         height={400}
                                         className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
@@ -144,7 +144,7 @@ export default function AboutPage() {
                                 </div>
                             </div>
                             <h3 className="text-xl font-bold text-foreground mb-2">Ihor</h3>
-                            <p className="text-sm font-semibold text-primary mb-3">SEO & Founder</p>
+                            <p className="text-sm font-semibold text-primary mb-3">CEO & Founder</p>
                             <p className="text-center text-muted-foreground text-sm leading-relaxed w-[80%] mx-auto">
                                 Visionary strategist driving our growth and ensuring every traveler discovers PlaPlan. Your passion for optimizing travel experiences extends from search engines to real-world adventures.
                             </p>
