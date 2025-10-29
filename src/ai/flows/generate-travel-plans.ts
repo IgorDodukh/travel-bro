@@ -41,8 +41,7 @@ const GooglePlaceDetailsSchema = z.object({
   types: z.array(z.string()).optional(),
   user_ratings_total: z.number().optional(),
   place_id: z.string().optional(),
-  // Latitude/Longitude are now primarily taken from Place Details, not AI
-  latitude: z.number().optional(), // Make optional here, will be required later if details fetch succeeds
+  latitude: z.number().optional(),
   longitude: z.number().optional(),
 });
 
@@ -56,7 +55,6 @@ const GenerateTravelPlansInputSchema = z.object({
   includeSurroundings: z.boolean().optional().describe('Whether to include attractions in the surrounding area (up to 200km).'),
 });
 
-// Keep original AI schema with its lat/lng
 const AiPointOfInterestSchema = z.object({
   name: z.string().describe('The name of the point of interest.'),
   description: z.string().optional().describe('A brief description of the point of interest.'),
@@ -69,10 +67,9 @@ const AiPointOfInterestSchema = z.object({
   category: z.array(z.string()).describe('The category of the point of interest.'),
 });
 
-// Final schema expects potentially refined lat/lng from Google Details
 const FinalPointOfInterestSchema = AiPointOfInterestSchema.merge(GooglePlaceDetailsSchema).extend({
-    latitude: z.number(), // Now required in the final merged object
-    longitude: z.number(),
+  latitude: z.number(),
+  longitude: z.number(),
 });
 
 
@@ -91,13 +88,10 @@ const GenerateTravelPlansOutputSchema = z.object({
 
 export type GenerateTravelPlansInput = z.infer<typeof GenerateTravelPlansInputSchema>;
 export type GenerateTravelPlansOutput = z.infer<typeof GenerateTravelPlansOutputSchema>;
-// Export the specific AI type to use in findPlaceId signature
 export type AiPointOfInterest = z.infer<typeof AiPointOfInterestSchema>;
 
 const GOOGLE_API_KEY = process.env.GOOGLE_GEOCODING_API_KEY!;
 
-// --- MODIFIED findPlaceId ---
-// Accepts the full AI POI object (including address) and the overall destination
 const findPlaceId = async (poi: AiPointOfInterest, destination: string): Promise<string | null> => {
 
   // Strategy 1: Text search using Name, Address, and Destination (Primary and most specific)
@@ -109,16 +103,7 @@ const findPlaceId = async (poi: AiPointOfInterest, destination: string): Promise
     const data = await response.json();
 
     if (data.status === 'OK' && data.results.length > 0) {
-      // Basic check: Does the first result name *roughly* match?
-      const topResultName = data.results[0].name.toLowerCase();
-      const poiNameLower = poi.name.toLowerCase();
-      // Allow for partial matches or slight variations, useful for names like "Cathedrale..." vs "Monaco Cathedral"
-      if (topResultName.includes(poiNameLower) || poiNameLower.includes(topResultName)) {
-        console.log(`✓ [Place ID - Strategy 1] Found Place ID: ${data.results[0].place_id} for '${poi.name}' using Name+Address+Destination`);
-        return data.results[0].place_id;
-      } else {
-        console.warn(`[Place ID - Strategy 1] Top result name "${data.results[0].name}" doesn't closely match query name "${poi.name}". Skipping.`);
-      }
+      return data.results[0].place_id;
     } else {
       console.log(`[Place ID - Strategy 1] Text search failed or yielded no results for '${poi.name}' with address+destination. Status: ${data.status}`);
     }
@@ -135,16 +120,9 @@ const findPlaceId = async (poi: AiPointOfInterest, destination: string): Promise
     const data = await response.json();
 
     if (data.status === 'OK' && data.results.length > 0) {
-       const topResultName = data.results[0].name.toLowerCase();
-       const poiNameLower = poi.name.toLowerCase();
-       if (topResultName.includes(poiNameLower) || poiNameLower.includes(topResultName)) {
-            console.log(`✓ [Place ID - Strategy 2] Found Place ID: ${data.results[0].place_id} for '${poi.name}' using Name+Destination`);
-            return data.results[0].place_id;
-        } else {
-             console.warn(`[Place ID - Strategy 2] Top result name "${data.results[0].name}" doesn't closely match query name "${poi.name}". Skipping.`);
-        }
+      return data.results[0].place_id;
     } else {
-         console.log(`[Place ID - Strategy 2] Text search failed or yielded no results for '${poi.name}' with destination. Status: ${data.status}`);
+      console.log(`[Place ID - Strategy 2] Text search failed or yielded no results for '${poi.name}' with destination. Status: ${data.status}`);
     }
   } catch (error) {
     console.error(`[Place ID - Strategy 2] Text search with destination failed for ${poi.name}:`, error);
@@ -154,22 +132,15 @@ const findPlaceId = async (poi: AiPointOfInterest, destination: string): Promise
   // Strategy 3: Nearby search using AI's coordinates (Last Resort Fallback)
   // This might still pick the wrong place if AI coords are way off, but it's better than nothing.
   try {
-    const radius = 500; // Increased radius slightly for more tolerance if AI coords are slightly off
+    const radius = 500;
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${poi.latitude},${poi.longitude}&radius=${radius}&keyword=${encodeURIComponent(poi.name)}&key=${GOOGLE_API_KEY}`;
     console.log(`[Place ID - Strategy 3] Searching Nearby ${poi.latitude},${poi.longitude} (radius ${radius}m) for keyword: ${poi.name}`);
     const response = await fetch(url);
     const data = await response.json();
     if (data.status === 'OK' && data.results.length > 0) {
-       const topResultName = data.results[0].name.toLowerCase();
-       const poiNameLower = poi.name.toLowerCase();
-       if (topResultName.includes(poiNameLower) || poiNameLower.includes(topResultName)) {
-          console.log(`✓ [Place ID - Strategy 3] Found Place ID via Nearby Search: ${data.results[0].place_id} for '${poi.name}'`);
-          return data.results[0].place_id;
-       } else {
-           console.warn(`[Place ID - Strategy 3] Top nearby result name "${data.results[0].name}" doesn't closely match query name "${poi.name}". Skipping.`);
-       }
+      return data.results[0].place_id;
     } else {
-         console.log(`[Place ID - Strategy 3] Nearby search failed or yielded no results for '${poi.name}'. Status: ${data.status}`);
+      console.log(`[Place ID - Strategy 3] Nearby search failed or yielded no results for '${poi.name}'. Status: ${data.status}`);
     }
   } catch (error) {
     console.error(`[Place ID - Strategy 3] Nearby search failed for ${poi.name}:`, error);
@@ -179,12 +150,11 @@ const findPlaceId = async (poi: AiPointOfInterest, destination: string): Promise
   return null;
 };
 
-const fetchPlaceDetails = async (placeId: string): Promise<Partial<z.infer<typeof GooglePlaceDetailsSchema>> | null> => { // Return Partial
+const fetchPlaceDetails = async (placeId: string): Promise<Partial<z.infer<typeof GooglePlaceDetailsSchema>> | null> => {
   try {
-    // Keep geometry/location to get refined coordinates
     const fields = [
       'place_id', 'name', 'formatted_phone_number', 'website', 'photos',
-      'rating', 'user_ratings_total', 'types', 'geometry' // Fetch geometry
+      'rating', 'user_ratings_total', 'types', 'geometry'
     ].join(',');
 
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${GOOGLE_API_KEY}`;
@@ -193,11 +163,7 @@ const fetchPlaceDetails = async (placeId: string): Promise<Partial<z.infer<typeo
 
     if (data.status === 'OK' && data.result) {
       const result = data.result;
-      // Use console.dir for better object inspection in logs if needed
-      // console.log(`✓ [Details] Fetched details for Place ID ${placeId}: `, result);
-      console.log(`✓ [Details] Fetched details for Place ID ${placeId}: ${result.name}`);
-
-      let photoUrls: string[] | undefined = undefined; // Initialize as potentially undefined
+      let photoUrls: string[] | undefined = undefined;
 
       if (result.photos && result.photos.length > 0) {
         photoUrls = result.photos.slice(0, 5).map((photo: any) =>
@@ -205,28 +171,26 @@ const fetchPlaceDetails = async (placeId: string): Promise<Partial<z.infer<typeo
         );
       }
 
-      // Extract refined coordinates if available
       const latitude = result.geometry?.location?.lat;
       const longitude = result.geometry?.location?.lng;
 
       if (latitude === undefined || longitude === undefined) {
-         console.warn(`[Details] Missing geometry information for Place ID ${placeId}`);
+        console.warn(`[Details] Missing geometry information for Place ID ${placeId}`);
       }
 
       return {
         formatted_phone_number: result.international_phone_number || result.formatted_phone_number,
         website: result.website,
         photos: photoUrls,
-        // Keep these commented if not used, but fetch them just in case
         rating: result.rating,
         user_ratings_total: result.user_ratings_total,
         types: result.types,
-        place_id: result.place_id, // Keep place_id if useful for debugging or future use
-        latitude: latitude, // Add refined coordinates
+        place_id: result.place_id,
+        latitude: latitude,
         longitude: longitude,
       };
     } else {
-       console.error(`[Details] Failed to fetch details for Place ID ${placeId}. Status: ${data.status}, Error: ${data.error_message || 'No error message'}`);
+      console.error(`[Details] Failed to fetch details for Place ID ${placeId}. Status: ${data.status}, Error: ${data.error_message || 'No error message'}`);
     }
     return null;
   } catch (error) {
@@ -236,7 +200,6 @@ const fetchPlaceDetails = async (placeId: string): Promise<Partial<z.infer<typeo
 };
 
 
-// Two-step approach: Generate POIs first, then get coordinates
 const generatePOIsPrompt = ai.definePrompt({
   name: 'generatePOIsOnly',
   input: { schema: GenerateTravelPlansInputSchema },
@@ -248,13 +211,12 @@ const generatePOIsPrompt = ai.definePrompt({
         monthlyRatings: z.array(MonthlyRatingSchema).describe('Array of monthly ratings where each object contains month number (1-12) and rating (0-10).'),
         accommodationPrice: z.array(AccommodationPriceSchema).describe('Array of accommodation prices where each object contains currency code and price.'),
         transportDetails: TransportDetailsSchema.optional().describe('Details about local public transport costs and options.'),
-        // Output only AI generated POI data initially
         pointsOfInterest: z.array(z.object({
           name: z.string(),
           address: z.string(),
           description: z.string(),
-          latitude: z.number(), // AI provides initial guess
-          longitude: z.number(),// AI provides initial guess
+          latitude: z.number(),
+          longitude: z.number(),
           time: z.number(),
           day: z.number(),
           cost: z.string(),
@@ -385,12 +347,10 @@ Here is an example of the required JSON structure:
   },
 });
 
-// Use the *NEW* two-step flow
 const enhancedFlowWithPOIsFirst = ai.defineFlow(
   {
     name: 'enhancedTravelPlansFlowWithPOIs',
     inputSchema: GenerateTravelPlansInputSchema,
-    // Output still matches the final desired schema
     outputSchema: GenerateTravelPlansOutputSchema,
   },
   async input => {
@@ -400,8 +360,7 @@ const enhancedFlowWithPOIsFirst = ai.defineFlow(
 
     if (!initialOutput || !initialOutput.travelPlans || initialOutput.travelPlans.length === 0) {
       console.error('!!! AI (generatePOIsPrompt) failed to generate initial plan structure. Output:', initialOutput);
-      // Consider throwing an error or returning empty if this step fails critically
-       return { travelPlans: [] }; // Or throw new Error(...)
+      return { travelPlans: [] };
     }
 
     console.log('✓ [AI Step 1] Initial plan structure generated.');
@@ -410,51 +369,42 @@ const enhancedFlowWithPOIsFirst = ai.defineFlow(
     const finalTravelPlans = await Promise.all(
       initialOutput.travelPlans.map(async (plan) => {
         const enrichedPoisPromises = plan.pointsOfInterest.map(async (poi) => {
-          // Find Place ID using Name, Address, and Destination
-          const placeId = await findPlaceId(poi as AiPointOfInterest, input.destination); // Cast needed if TS complains
+          const placeId = await findPlaceId(poi as AiPointOfInterest, input.destination);
 
           if (placeId) {
             const details = await fetchPlaceDetails(placeId);
             if (details) {
-              // PRIORITIZE Google's coordinates if available!
               const finalLatitude = details.latitude ?? poi.latitude;
               const finalLongitude = details.longitude ?? poi.longitude;
 
-              // Ensure cost doesn't have newlines which can break JSON in some contexts
               const cleanCost = poi.cost?.replace(/[\r\n]+/g, ' ') || 'Not found';
 
               console.log(`✓ [Enrichment] Successfully enriched POI: '${poi.name}' with Place ID: ${placeId}. Using coords: ${finalLatitude}, ${finalLongitude}`);
-              // Merge AI data with Google Details, making sure final lat/lng are present
               return {
-                 ...poi, // Spread original AI POI data first
-                 ...details, // Spread Google details (may overwrite some fields like description, potentially photos, types etc.)
-                 latitude: finalLatitude, // Explicitly set the final coordinates
-                 longitude: finalLongitude,
-                 cost: cleanCost, // Use cleaned cost
-              } as z.infer<typeof FinalPointOfInterestSchema>; // Assert final type
+                ...poi,
+                ...details,
+                latitude: finalLatitude,
+                longitude: finalLongitude,
+                cost: cleanCost,
+              } as z.infer<typeof FinalPointOfInterestSchema>;
             } else {
-                 console.warn(`! [Enrichment] Failed to fetch details for Place ID ${placeId} of '${poi.name}'. Using AI data only.`);
+              console.warn(`! [Enrichment] Failed to fetch details for Place ID ${placeId} of '${poi.name}'. Using AI data only.`);
             }
           } else {
             console.warn(`! [Enrichment] Could not find Place ID for '${poi.name}' at '${poi.address}'. Using AI data only.`);
           }
 
-          // Fallback: If enrichment fails, return the original AI POI, ensuring cost is cleaned
           return {
-             ...poi,
-             cost: poi.cost?.replace(/[\r\n]+/g, ' ') || 'Not found'
-          } as z.infer<typeof FinalPointOfInterestSchema>; // Assert final type even in fallback
+            ...poi,
+            cost: poi.cost?.replace(/[\r\n]+/g, ' ') || 'Not found'
+          } as z.infer<typeof FinalPointOfInterestSchema>;
         });
 
         const resolvedPois = await Promise.all(enrichedPoisPromises);
 
-        // Filter out POIs where final coordinates couldn't be determined (optional, but good practice)
-        // const validPois = resolvedPois.filter(p => p.latitude !== undefined && p.longitude !== undefined);
-        // If filtering, you might want to log which ones were removed. For now, keep all.
-
         return {
           ...plan,
-          pointsOfInterest: resolvedPois, // Use potentially filtered list if you add filtering
+          pointsOfInterest: resolvedPois,
         };
       })
     );
@@ -465,17 +415,14 @@ const enhancedFlowWithPOIsFirst = ai.defineFlow(
 );
 
 
-// Main function now uses the new two-step flow
 export async function generateTravelPlans(input: GenerateTravelPlansInput): Promise<GenerateTravelPlansOutput> {
   console.log('=== 1. Starting AI Travel Plan Generation (Two-Step Flow) ===');
   try {
-      const result = await enhancedFlowWithPOIsFirst(input);
-      console.log('=== 3. AI Generation & Augmentation Complete. Returning final plans. ===');
-      return result;
+    const result = await enhancedFlowWithPOIsFirst(input);
+    console.log('=== 3. AI Generation & Augmentation Complete. Returning final plans. ===');
+    return result;
   } catch (error) {
-       console.error('!!! Error during the enhanced two-step flow:', error);
-       // Depending on requirements, you might return an empty structure or re-throw
-       return { travelPlans: [] }; // Graceful failure returning empty plans
-       // throw error; // Or propagate the error up
+    console.error('!!! Error during the enhanced two-step flow:', error);
+    return { travelPlans: [] };
   }
 }
