@@ -30,6 +30,8 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    console.log('[API /generate-plans] Received request: ', JSON.stringify(body, null, 2));
+
     const validationResult = ApiInputSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
 
     const aiInput: GenerateTravelPlansInput = validationResult.data;
     const generatedPlans = await generateTravelPlans(aiInput);
+    console.log('[API /generate-plans] Generated Plans:', JSON.stringify(generatedPlans, null, 2));
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {
       return NextResponse.json(
