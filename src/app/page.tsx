@@ -94,7 +94,13 @@ export default function HomePage() {
           </div>
 
           <div className="pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
-
+            <a href="https://peerlist.io/undergrid/project/plaplanio" target="_blank" rel="noreferrer">
+              <img
+                src="https://peerlist.io/api/v1/projects/embed/PRJHDNDDD7PRQBBQR1AKGQMBNDL7N7?showUpvote=true&theme=dark"
+                alt="PlaPlan.io"
+                className='w-auto h-[72px]'
+              />
+            </a>
             {/* QR Code — only visible on desktop */}
             <div className="hidden md:flex flex-col items-center">
               <Image
