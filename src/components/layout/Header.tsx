@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Mail, Info, X } from 'lucide-react';
+import { Home, Mail, Info, X, Notebook, BookText } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Header() {
@@ -24,6 +24,12 @@ export default function Header() {
     //   icon: Compass,
     //   description: 'Saved trips collection'
     // },
+    {
+      href: '/blog',
+      label: 'Blog',
+      icon: BookText,
+      description: 'Blog'
+    },
     {
       href: '/support',
       label: 'Contact Us',
