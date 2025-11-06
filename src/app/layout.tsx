@@ -7,10 +7,41 @@ import Footer from '@/components/layout/Footer';
 import { ApiLimitProvider } from '@/contexts/ApiLimitContext';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = {
-  title: 'PlaPlan - Your Personal Travel Assistant',
-  description: 'Plan your next adventure with PlaPlan, generating personalized travel itineraries.',
+  title: {
+    default: siteConfig.name,
+    template: `%s - ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: siteConfig.keywords,
+  robots: siteConfig.robots,
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title: siteConfig.name,
+    description: siteConfig.description,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: `${siteConfig.url}/og-image.png`, // Create this image
+        width: 1200,
+        height: 630,
+        alt: siteConfig.name,
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.name,
+    description: siteConfig.description,
+    images: [`${siteConfig.url}/og-image.png`], // Same image as above
+  },
 };
 
 export default function RootLayout({
@@ -43,6 +74,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="canonical" href="https://plaplan.io" key="canonical" />
         <meta name="PlaPlan" content="app-id=6751006510"></meta>
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">

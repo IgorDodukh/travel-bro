@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://plaplan.io
+
+# Sitemaps
+Sitemap: https://plaplan.io/sitemap.xml
