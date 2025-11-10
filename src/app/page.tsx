@@ -94,13 +94,6 @@ export default function HomePage() {
           </div>
 
           <div className="pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
-            <a href="https://peerlist.io/undergrid/project/plaplanio" target="_blank" rel="noreferrer">
-              <img
-                src="https://peerlist.io/api/v1/projects/embed/PRJHDNDDD7PRQBBQR1AKGQMBNDL7N7?showUpvote=true&theme=dark"
-                alt="PlaPlan.io"
-                className='w-auto h-[72px]'
-              />
-            </a>
             {/* QR Code — only visible on desktop */}
             <div className="hidden md:flex flex-col items-center">
               <Image
@@ -279,7 +272,6 @@ export default function HomePage() {
             {/* Screenshot 3 - Itinerary Details */}
             <div className="group flex flex-col items-center md:col-span-2 lg:col-span-1">
               <div className="relative w-full max-w-[280px] mx-auto mb-6 transform transition-all duration-500 hover:scale-105 hover:-translate-y-2">
-                {/* Phone Frame */}
                 {/* Phone Frame */}
                 <div className="w-[173px] h-[570px] rounded-[2rem]">
                   <Image
