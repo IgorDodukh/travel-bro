@@ -70,10 +70,16 @@ export default function HomePage() {
           </div> */}
 
           {/* Main Heading */}
-          <p className="text-4xl md:text-5xl text-foreground font-bold my-12 max-w-2xl mx-auto">
-            Transform your travels into unforgettable experiences
+          <p className="text-4xl md:text-5xl text-gray-900 font-bold max-w-2xl mx-auto my-12 text-center leading-tight">
+            Transform your travels into{' '}
+            <span
+              className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent"
+              style={{ fontFamily: 'Pacifico, cursive' }}
+            >
+              unforgettable
+            </span>{' '}
+            experiences
           </p>
-
           {/* CTA Section */}
 
           <div className="text-center">
