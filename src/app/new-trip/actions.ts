@@ -7,6 +7,7 @@ import { z } from 'zod';
 const NewTripFormSchema = z.object({
   destination: z.string().min(1, "Destination is required"),
   duration: z.number().min(1, "Duration must be at least 1 day"),
+  budget: z.string().min(1, "Budget is required"),
   accommodation: z.string().min(1, "Accommodation type is required"),
   transport: z.string().min(1, "Transport type is required"),
   interests: z.array(z.string()).min(1, "At least one interest is required"),
@@ -31,6 +32,7 @@ export async function handleGeneratePlansAction(
     const rawFormData = {
       destination: formData.get('destination') as string,
       duration: parseInt(formData.get('duration') as string, 10),
+      budget: formData.get('budget') as string,
       accommodation: formData.get('accommodation') as string,
       transport: formData.get('transport') as string,
       interests: (formData.get('interests') as string)?.split(',').map(i => i.trim()).filter(i => i) || [],

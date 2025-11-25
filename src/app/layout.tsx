@@ -8,6 +8,7 @@ import { ApiLimitProvider } from '@/contexts/ApiLimitContext';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { siteConfig } from '@/config/site';
+import Sidebar from '@/components/Sidebar';
 
 export const metadata: Metadata = {
   title: {
@@ -89,6 +90,7 @@ export default function RootLayout({
           <Header />
 
           <main className="flex-grow container mx-auto px-0 py-8 relative z-0">
+            {/* <Sidebar /> */}
             {children}
             <Analytics />
             <SpeedInsights />

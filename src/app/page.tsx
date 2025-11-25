@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Calendar, Plane, Sparkles, Globe, Compass, Mountain, Camera } from 'lucide-react';
 import ReviewsCarousel from '@/components/ReviewCarousel';
+import FAQSection from '@/components/FaqSection';
 
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -217,11 +218,11 @@ export default function HomePage() {
 
         <section className="mt-20 mb-20 relative">
           <div className="text-center mb-12">
-            <p className="text-2xl md:text-3xl text-black/80 font-semibold mb-2">
-              See PlaPlan.io in Action
+            <p className="text-3xl md:text-4xl text-black/80 font-semibold mb-2 max-w-3xl mx-auto leading-relaxed">
+              See plaplan.io in Action
             </p>
             <hr className="w-20 h-1 mx-auto my-2 bg-primary border-0 rounded-lg md:my-2" />
-            <p className="text-sm md:text-md text-black/60 max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Discover how PlaPlan.io transforms your travel planning experience with intelligent features and beautiful design
             </p>
           </div>
@@ -246,7 +247,7 @@ export default function HomePage() {
               {/* Feature Description */}
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">AI-Powered Planning</h3>
-                <p className="text-sm text-muted-foreground max-w-[280px]">
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                   Let our intelligent AI create personalized itineraries based on your preferences and interests
                 </p>
               </div>
@@ -269,7 +270,7 @@ export default function HomePage() {
               {/* Feature Description */}
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">Interactive Maps</h3>
-                <p className="text-sm text-muted-foreground max-w-[280px]">
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                   Visualize your entire journey with interactive maps and optimized routes between destinations
                 </p>
               </div>
@@ -292,7 +293,7 @@ export default function HomePage() {
               {/* Feature Description */}
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">Detailed Itineraries</h3>
-                <p className="text-sm text-muted-foreground max-w-[280px]">
+                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                   Every day planned perfectly with timings, locations, and all the details you need for a smooth trip
                 </p>
               </div>
@@ -319,11 +320,11 @@ export default function HomePage() {
         <section className="text-center">
           {/* Feature Grid */}
           <div className='mt-10'>
-            <p className="text-2xl md:text-3xl text-black/80 font-semibold mb-2 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-3xl md:text-4xl text-black/80 font-semibold mb-2 max-w-3xl mx-auto leading-relaxed">
               Awesome App Features
             </p>
             <hr className="w-20 h-1 mx-auto my-2 bg-primary border-0 rounded-lg md:my-2 dark:bg-gray-700" />
-            <p className="text-sm md:text-md text-black/60 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-12 max-w-3xl mx-auto leading-relaxed">
               Traveling made easy with AI-powered planning, worldwide destinations, and mobile-focused design. Create your perfect trip in minutes and never waste your time on endless research!
             </p>
           </div>
@@ -379,6 +380,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        <FAQSection />
         {/* <ReviewsCarousel /> */}
       </div>
 

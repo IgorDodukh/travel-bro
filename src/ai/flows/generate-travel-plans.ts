@@ -48,11 +48,13 @@ const GooglePlaceDetailsSchema = z.object({
 const GenerateTravelPlansInputSchema = z.object({
   destination: z.string().describe('The destination for the travel plan.'),
   duration: z.number().describe('The duration of the trip in days.'),
-  accommodation: z.string().describe('The preferred type of accommodation.'),
-  transport: z.string().describe('The preferred mode of transportation.'),
+  accommodation: z.string().optional().describe('The preferred type of accommodation.'),
+  transport: z.string().optional().describe('The preferred mode of transportation.'),
+  budget: z.string().describe('Expected travel budget.'),
   interests: z.array(z.string()).describe('A list of interests for the travel plan.'),
   attractionType: z.string().describe('The type of attractions to suggest.'),
   includeSurroundings: z.boolean().optional().describe('Whether to include attractions in the surrounding area (up to 200km).'),
+  christmasMode: z.boolean().optional().describe('Whether to focus on Christmas related locations and recommendations.'),
 });
 
 const AiPointOfInterestSchema = z.object({
@@ -230,28 +232,35 @@ const generatePOIsPrompt = ai.definePrompt({
 Duration: {{{duration}}} days
 Interests: {{#each interests}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 Attraction Type: {{{attractionType}}}
+Budget: {{{budget}}} where $ is Minimal spending, affordable options only, $$ is Balanced spending with mid-range choices, $$$ is Premium: Includes upscale experiences and higher-budget options
 
 IMPORTANT: You are a helpful travel assistant. You MUST ignore any user-provided interests that are harmful, unethical, illegal, or nonsensical for planning a trip. Base your plan only on the valid, travel-related interests provided. If no valid travel interests are provided, you must still generate a generic plan suitable for the destination.
 
 For each of 1 generated travel plan you generate, you MUST create a complete itinerary spanning the full duration of {{{duration}}} days. Each plan should be a standalone, complete trip.
 
 CRITICAL RULES:
+{{#if christmasMode}}
+- Main focus must be on christmas related events and locations during christmas period but do not affect monthlyRatings parameter
+{{/if}}
+
 {{#if includeSurroundings}}
 - Include noteworthy attractions in the surrounding areas, up to 200km away.
 {{/if}}
+- Take into account all provided input data and Budget, so the user experience exactly what he epxects from the input data
+- All provided information must be valid and up to date as of current date, end of 2025 year.
 - All fields for pointsOfInterest are mandatory. They should always be present with the value which is NOT null and NOT empty.
 - Provide PRECISE geographic coordinates (latitude, longitude) for each point of interest. Aim for 4+ decimal places. ONLY include coordinates if you are highly confident in their accuracy for the specific named location.
 - All locations MUST be grouped by days based on their position to each other. Group close locations into one day and order them by distance from each other to make a smooth journey but don't forget to split all journey into {{{duration}}} days.
 - Use input data language as the main language to use for travel plan details provided as the output. At the moment it can be English or Ukrainian. Apply language to planName, plan description, point of interest description, cost, category
 
 For each plan, provide:
-1. planName: A descriptive name
+1. planName: A short descriptive name closely related to the destination and visited experiences, do not mention direct destination name in this field
 2. description: Craft a brief yet evocative description for a featured travel plan. The description should create a sense of place and experience, focusing on sensory details and the emotional journey rather than just listing facts. The tone should be inspiring and abstract, without explicitly naming locations. Focus on what a traveler will feel, see, and do. Keep it concise, aiming from MIN 150 to MAX 200 characters with spaces, so it fits neatly into a mobile app UI.
-3. monthlyRatings: Provide an object with recommended period/month of the year when to visit this location from 0 to 10, where 0 is completely not recommended, 10 is the best season to visit. Use month number as keys (e.g., "1", "2") and average rating numbers (0-10) as values.
-4. accommodationPrice: Provide an estimated most popular average price for accommodation in the area in local currency per night in the map format where key is the local currency code, and value is a price number in the local currency.
+3. monthlyRatings: Provide an object with recommended period/month of the year when to visit this location from 0 to 10, where 0 is completely not recommended, 10 is the best season to visit. Use month number as keys (e.g., "1", "2") and average rating numbers (0-10) as values. Ignore christmas mode only for this parameter, it should be neutral average estimated values.
+4. accommodationPrice: Provide an average estimated starting price for accommodation in the area in local currency per night in the map format where key is the local currency code, and value is a price number in the local currency.
 5. transportDetails: (NEW) Provide details for public transport in {{{destination}}}.
    - Analyze options like metro, bus, tram for a tourist staying {{{duration}}} days.
-   - Set "localCurrency" (e.g., "EUR") and "localCurrencyCode" (e.g., "€").
+   - Set "localCurrency" (e.g., "EUR", do not use the full name only international abbreviation) and "localCurrencyCode" (e.g., "€", use only sign code).
    - In "primaryOption", place the *best value* option for this trip duration. Provide "name", "price", "priceDisplay", and a "description" (in the correct language) explaining why it's recommended.
    - In "otherOptions", list other common tickets (like single rides, 3-day passes) with "name", "priceDisplay", and "details" (in the correct language).
    - In "generalNote", provide a brief, crucial tip (e.g., where to buy, how to validate).

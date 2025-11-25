@@ -7,11 +7,13 @@ import { z } from 'zod';
 const ApiInputSchema = z.object({
   destination: z.string().min(1, "Destination is required"),
   duration: z.number().min(1, "Duration must be at least 1 day"),
-  accommodation: z.string().min(1, "Accommodation type is required"),
-  transport: z.string().min(1, "Transport type is required"),
+  accommodation: z.string().optional(),
+  transport: z.string().optional(),
+  budget: z.string().min(1, "Budget type is required"),
   interests: z.array(z.string()).min(1, "At least one interest is required"),
   attractionType: z.string().min(1, "Attraction type is required"),
   includeSurroundings: z.boolean().optional(),
+  christmasMode: z.boolean().optional(),
 });
 
 const corsHeaders = {
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
 
     const aiInput: GenerateTravelPlansInput = validationResult.data;
     const generatedPlans = await generateTravelPlans(aiInput);
+    console.log('========');
     console.log('[API /generate-plans] Generated Plans:', JSON.stringify(generatedPlans, null, 2));
 
     if (!generatedPlans || !generatedPlans.travelPlans || generatedPlans.travelPlans.length === 0) {

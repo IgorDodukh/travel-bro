@@ -72,7 +72,7 @@ export default function GeneratedPlansPage() {
         // Persist the confirmed form input used for this regeneration to session storage
         sessionStorage.setItem(SESSION_STORAGE_FORM_INPUT_KEY, JSON.stringify(confirmedInput));
         // Also update the local state for any subsequent regenerations on this page
-        setFormInput(confirmedInput);
+        // setFormInput(confirmedInput); // TODO: Temporarily disable updating form input to allow multiple regenerations from the original input
       }
       window.scrollTo(0, 0); // Scroll to top to see new plans
       toast({
