@@ -7,6 +7,12 @@ const MonthlyRatingSchema = z.object({
   rating: z.number().describe('Rating from 0-10'),
 });
 
+const SafetyRatingSchema = z.object({
+  rating: z.string().describe('Safety level (1-10)'),
+  description: z.string().describe('Brief explanation of the safety rating'),
+  sources: z.array(z.string()).describe('Sources used to determine the safety rating'),
+});
+
 const AccommodationPriceSchema = z.object({
   currency: z.string().describe('Currency code (e.g., EUR, USD)'),
   price: z.number().describe('Average price per night'),
@@ -79,6 +85,7 @@ const TravelPlanSchema = z.object({
   planName: z.string().describe('Name of the travel plan.'),
   description: z.string().describe('Description of the travel plan.'),
   monthlyRatings: z.array(MonthlyRatingSchema).describe('Array of monthly ratings where each object contains month number (1-12) and rating (0-10).'),
+  safetyRating: SafetyRatingSchema.describe('Safety rating for the destination.'),
   accommodationPrice: z.array(AccommodationPriceSchema).describe('Array of accommodation prices where each object contains currency code and price.'),
   transportDetails: TransportDetailsSchema.optional().describe('Details about local public transport costs and options.'),
   pointsOfInterest: z.array(FinalPointOfInterestSchema).describe('A list of points of interest with coordinates.'), // Uses Final schema
@@ -211,6 +218,7 @@ const generatePOIsPrompt = ai.definePrompt({
         planName: z.string(),
         description: z.string(),
         monthlyRatings: z.array(MonthlyRatingSchema).describe('Array of monthly ratings where each object contains month number (1-12) and rating (0-10).'),
+        safetyRating: SafetyRatingSchema.describe('Safety rating for the destination.'),
         accommodationPrice: z.array(AccommodationPriceSchema).describe('Array of accommodation prices where each object contains currency code and price.'),
         transportDetails: TransportDetailsSchema.optional().describe('Details about local public transport costs and options.'),
         pointsOfInterest: z.array(z.object({
@@ -257,15 +265,19 @@ For each plan, provide:
 1. planName: A short descriptive name closely related to the destination and visited experiences, do not mention direct destination name in this field
 2. description: Craft a brief yet evocative description for a featured travel plan. The description should create a sense of place and experience, focusing on sensory details and the emotional journey rather than just listing facts. The tone should be inspiring and abstract, without explicitly naming locations. Focus on what a traveler will feel, see, and do. Keep it concise, aiming from MIN 150 to MAX 200 characters with spaces, so it fits neatly into a mobile app UI.
 3. monthlyRatings: Provide an object with recommended period/month of the year when to visit this location from 0 to 10, where 0 is completely not recommended, 10 is the best season to visit. Use month number as keys (e.g., "1", "2") and average rating numbers (0-10) as values. Ignore christmas mode only for this parameter, it should be neutral average estimated values.
-4. accommodationPrice: Provide an average estimated starting price for accommodation in the area in local currency per night in the map format where key is the local currency code, and value is a price number in the local currency.
-5. transportDetails: (NEW) Provide details for public transport in {{{destination}}}.
+4. safetyRating: Provide a safety rating for {{{destination}}}.
+   - rating: A safety level from 1 (very unsafe) to 10 (very safe) for tourists.
+   - description: A brief well formatted explanation of the safety rating, mentioning common concerns or highlights.
+   - sources: List the verified URL sources used to determine the safety rating (e.g., government travel advisories, popular resources, travel forums).
+5. accommodationPrice: Provide an average estimated starting price for accommodation in the area in local currency per night in the map format where key is the local currency code, and value is a price number in the local currency.
+6. transportDetails: (NEW) Provide details for public transport in {{{destination}}}.
    - Analyze options like metro, bus, tram for a tourist staying {{{duration}}} days.
    - Set "localCurrency" (e.g., "EUR", do not use the full name only international abbreviation) and "localCurrencyCode" (e.g., "€", use only sign code).
    - In "primaryOption", place the *best value* option for this trip duration. Provide "name", "price", "priceDisplay", and a "description" (in the correct language) explaining why it's recommended.
    - In "otherOptions", list other common tickets (like single rides, 3-day passes) with "name", "priceDisplay", and "details" (in the correct language).
    - In "generalNote", provide a brief, crucial tip (e.g., where to buy, how to validate).
    - All text fields must be in the requested language.
-6. pointsOfInterest: A flat array containing locations for the entire trip.
+7. pointsOfInterest: A flat array containing locations for the entire trip.
    - For EACH DAY within the {{{duration}}}-day trip, include 3 to 5 points of interest.
    - For EACH point of interest, provide:
      - name: (use language of input data) EXACT official name (as found on Google Maps)
@@ -296,6 +308,14 @@ Here is an example of the required JSON structure:
       "description": "A journey through the heart of Lisbon's most iconic historical sites.",
       "monthlyRatings": [...],
       "accommodationPrice": [...],
+      "safetyRating": {
+        "rating": "8",
+        "description": "Lisbon is generally safe for tourists, with low crime rates in popular areas. Standard precautions are advised.",
+        "sources": [
+          "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/portugal-travel-advisory.html",
+          "https://www.numbeo.com/crime/in/Lisbon"
+        ]
+      },
       "transportDetails": {
         "localCurrency": "EUR",
         "localCurrencyCode": "€",
