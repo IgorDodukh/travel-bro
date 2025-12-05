@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Calendar, Plane, Sparkles, Globe, Compass, Mountain, Camera } from 'lucide-react';
 import ReviewsCarousel from '@/components/ReviewCarousel';
 import FAQSection from '@/components/FaqSection';
+import { Urbanist } from 'next/font/google'
+
+const urbanist = Urbanist({
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-urbanist',
+})
+
 
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -71,11 +79,10 @@ export default function HomePage() {
           </div> */}
 
           {/* Main Heading */}
-          <p className="text-4xl md:text-5xl text-gray-900 font-bold max-w-2xl mx-auto my-12 text-center leading-tight">
+          <p className="text-3xl md:text-5xl sm:text-3xl text-gray-900 font-semibold max-w-2xl mx-auto my-4 md:my-8 lg:my-12 xl:my-12 text-center leading-tight">
             Transform your travels into{' '}
             <span
-              className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent"
-              // style={{ fontFamily: 'Pacifico, cursive' }}
+              className="bg-gradient-to-r from-orange-500 via-primary to-pink-500 bg-clip-text text-transparent"
             >
               unforgettable
             </span>{' '}
@@ -83,24 +90,21 @@ export default function HomePage() {
           </p>
           {/* CTA Section */}
 
-          <div className="text-center">
-            <div className="flex flex-col sm:flex-row lg:flex-row xl:flex-row justify-center gap-3 sm:gap-8 mt-8 text-sm font-semibold text-muted-foreground pl-0 sm:pl-0 items-start sm:items-center">
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
-                Powered by AI
-              </span>
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '1s' }} />
-                Worldwide destinations
-              </span>
-              <span className="flex items-center gap-2 pl-2.5 sm:pl-0">
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
-                Mobile-friendly
-              </span>
-            </div>
+          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold text-gray-600">
+            <span className="flex items-center gap-2 justify-center sm:justify-start">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
+              Full journey in seconds
+            </span>
+            <span className="flex items-center gap-2 justify-center sm:justify-start">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '1s' }} />
+              Worldwide destinations
+            </span>
+            <span className="flex items-center gap-2 justify-center sm:justify-start">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
+              Smart route planning
+            </span>
           </div>
-
-          <div className="pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
+          <div className="pt-6 md:pt-10 lg:pt-10 xl:pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
             {/* QR Code — only visible on desktop */}
             <div className="hidden md:flex flex-col items-center">
               <Image
