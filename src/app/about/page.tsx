@@ -186,7 +186,7 @@ export default function AboutPage() {
                     </p>
                     <div className="pt-2 pb-2 flex justify-center items-center">
                         <Link
-                            href="https://apps.apple.com/pt/app/plaplan/id6751006510?l=en-GB"
+                            href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_about&mt=8"
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label="Download on the App Store"
