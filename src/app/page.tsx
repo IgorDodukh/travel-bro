@@ -79,14 +79,14 @@ export default function HomePage() {
           </div> */}
 
           {/* Main Heading */}
-          <p className="text-3xl md:text-5xl sm:text-3xl text-gray-900 font-semibold max-w-2xl mx-auto my-4 md:my-8 lg:my-12 xl:my-12 text-center leading-tight">
-            Transform your travels into{' '}
+          <p className="text-4xl md:text-6xl sm:text-4xl text-gray-900 font-semibold max-w-2xl mx-auto my-4 md:my-8 lg:my-12 xl:my-12 text-center leading-tight">
+            Plan your next travel{' '}
             <span
               className="bg-gradient-to-r from-orange-500 via-primary to-pink-500 bg-clip-text text-transparent"
             >
-              unforgettable
+              10X
             </span>{' '}
-            experiences
+            faster
           </p>
           {/* CTA Section */}
 
@@ -101,7 +101,7 @@ export default function HomePage() {
             </span>
             <span className="flex items-center gap-2 justify-center sm:justify-start">
               <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
-              Smart route planning
+              Smart route building
             </span>
           </div>
           <div className="pt-6 md:pt-10 lg:pt-10 xl:pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
