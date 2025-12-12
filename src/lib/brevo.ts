@@ -132,9 +132,6 @@ export async function sendWelcomeEmail(to: string, name?: string) {
             }
         );
 
-        console.log("Response result: ", res)
-        console.log("Response result: ", JSON.stringify(res))
-
         return res.data;
     } catch (err: any) {
         console.error("Brevo send email error:", err.response?.data || err);
