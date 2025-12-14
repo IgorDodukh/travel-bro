@@ -96,7 +96,7 @@ export default function AppDownloadSection() {
             <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C4.8 10.79 3.5 12.94 3.5 15.44c0 .09 0 .18.01.27h17c.01-.09.01-.18.01-.27 0-2.5-1.3-4.65-2.91-5.96zM7 13.75c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z" />
             </svg>
-            <span>Android Waitlist</span>
+            <span>Join Waitlist</span>
           </button>
         </div>
 
@@ -125,10 +125,10 @@ export default function AppDownloadSection() {
                     </svg>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Android Coming Soon! 🚀
+                    Android & Web Coming Soon! 🚀
                   </h2>
                   <p className="text-gray-600">
-                    Join 200+ users and be the first to know when our Android app launches.
+                    Join 200+ users and be the first to know when our Android and Web app launches.
                   </p>
                 </div>
 
