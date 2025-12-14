@@ -8,6 +8,7 @@ import { PlusCircle, Calendar, Plane, Sparkles, Globe, Compass, Mountain, Camera
 import ReviewsCarousel from '@/components/ReviewCarousel';
 import FAQSection from '@/components/FaqSection';
 import { Urbanist } from 'next/font/google'
+import AppDownloadSection from '@/components/AppDownloadSection';
 
 const urbanist = Urbanist({
   subsets: ['latin'],
@@ -104,37 +105,8 @@ export default function HomePage() {
               Smart route building
             </span>
           </div>
-          <div className="pt-6 md:pt-10 lg:pt-10 xl:pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
-            {/* QR Code — only visible on desktop */}
-            <div className="hidden md:flex flex-col items-center">
-              <Image
-                src="/assets/qr-code.png" // generate and save your QR linking to the App Store
-                alt="QR code to download PlaPlan"
-                width={120}
-                height={120}
-                className="rounded-lg shadow-md"
-              />
-            </div>
-            {/* App Store Button */}
-            <Link
-              href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_main&mt=8"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Download on the App Store"
-            >
-              <Image
-                src="/assets/app-store-badge-black.svg"
-                alt="Download on the App Store"
-                width={160}
-                height={44}
-                className="hover:opacity-80 transition-opacity duration-300"
-              />
-            </Link>
-            <span className="text-xs text-muted-foreground">
-              Free to download • Try premium features for free
-            </span>
-          </div>
         </section>
+        <AppDownloadSection/>
 
         {/* Travel Interests Badges Section */}
         <section className="mt-10 mb-16 relative">
