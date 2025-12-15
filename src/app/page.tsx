@@ -195,11 +195,11 @@ export default function HomePage() {
         <section className="mt-20 mb-20 relative">
           <div className="text-center mb-12">
             <p className="text-3xl md:text-4xl text-black/80 font-semibold mb-2 max-w-3xl mx-auto leading-relaxed">
-              See plaplan.io in Action
+              See PlaPlan in Action
             </p>
             <hr className="w-20 h-1 mx-auto my-2 bg-primary border-0 rounded-lg md:my-2" />
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Discover how PlaPlan.io transforms your travel planning experience with intelligent features and beautiful design
+              Discover how PlaPlan transforms your travel planning experience with intelligent features and beautiful design
             </p>
           </div>
 
