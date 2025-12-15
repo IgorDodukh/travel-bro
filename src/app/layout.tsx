@@ -21,6 +21,15 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+    // Add these for iOS Safari
+    viewportFit: 'cover', // This is the KEY fix
+  },
+  themeColor: '#ffffff', // Match your background color
   openGraph: {
     title: siteConfig.name,
     description: siteConfig.description,
@@ -77,6 +86,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="canonical" href="https://plaplan.io" key="canonical" />
         <meta name="PlaPlan" content="app-id=6751006510"></meta>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
         <ApiLimitProvider>

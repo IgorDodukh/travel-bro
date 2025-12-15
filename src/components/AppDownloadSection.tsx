@@ -42,11 +42,16 @@ export default function AppDownloadSection() {
         throw new Error(data.error || 'Failed to join waitlist');
       }
 
+      await fetch("/api/send-waitlist-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
       setSubmitted(true);
       setEmail('');
 
       setTimeout(() => {
-        setShowWaitlistModal(false);
         setSubmitted(false);
       }, 2000);
     } catch (err: any) {

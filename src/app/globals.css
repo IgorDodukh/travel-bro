@@ -8,6 +8,7 @@ body {
   background-image:
     radial-gradient(hsl(var(--border) / 0.1) 1px, transparent 1px);
   background-size: 20px 20px;
+  padding-top: max(env(safe-area-inset-top), 0px);
 }
 
 .blog-content h2 {
