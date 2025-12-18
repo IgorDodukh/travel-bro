@@ -3,19 +3,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusCircle, Calendar, Plane, Sparkles, Globe, Compass, Mountain, Camera } from 'lucide-react';
+import { Calendar, Plane, Sparkles, Globe, Mountain, Camera } from 'lucide-react';
 import ReviewsCarousel from '@/components/ReviewCarousel';
 import FAQSection from '@/components/FaqSection';
-import { Urbanist } from 'next/font/google'
 import AppDownloadSection from '@/components/AppDownloadSection';
-
-const urbanist = Urbanist({
-  subsets: ['latin'],
-  weight: ['400', '600'],
-  variable: '--font-urbanist',
-})
-
 
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
@@ -74,39 +65,24 @@ export default function HomePage() {
               </span>
             </div>
           </div>
-          {/* <div className="inline-flex items-center gap-2 bg-white/50 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 w-fit mx-auto lg:mx-0">
-            <Sparkles className="w-4 h-4 text-foreground" />
-            <span className="text-sm font-medium text-foreground">AI-Powered Travel Planning</span>
-          </div> */}
 
           {/* Main Heading */}
           <p className="text-4xl md:text-6xl sm:text-4xl text-gray-900 font-semibold max-w-2xl mx-auto my-4 md:my-8 lg:my-12 xl:my-12 text-center leading-tight">
-            Plan your next travel{' '}
+            Your trip is{' '}
             <span
               className="bg-gradient-to-r from-orange-500 via-primary to-pink-500 bg-clip-text text-transparent"
             >
-              10X
+              fully planned
             </span>{' '}
-            faster
+            without the boring research
           </p>
           {/* CTA Section */}
+          <p className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-sm sm:text-lg font-semibold text-gray-600">
+            From routes and maps to daily schedules and location insights. PlaPlan creates a complete, ready-to-use itinerary in minutes.
+          </p>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-xs sm:text-sm font-semibold text-gray-600">
-            <span className="flex items-center gap-2 justify-center sm:justify-start">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
-              Full journey in seconds
-            </span>
-            <span className="flex items-center gap-2 justify-center sm:justify-start">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '1s' }} />
-              Worldwide destinations
-            </span>
-            <span className="flex items-center gap-2 justify-center sm:justify-start">
-              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-primary rounded-full animate-pulse flex-shrink-0" style={{ animationDelay: '2s' }} />
-              Smart route building
-            </span>
-          </div>
         </section>
-        <AppDownloadSection/>
+        <AppDownloadSection />
 
         {/* Travel Interests Badges Section */}
         <section className="mt-10 mb-16 relative">

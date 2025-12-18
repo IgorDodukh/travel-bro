@@ -10,7 +10,7 @@ export default function AppDownloadSection() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const [deviceType, setDeviceType] = useState('desktop');
+  const [deviceType, setDeviceType] = useState('ios');
 
   useEffect(() => {
     const ua = navigator.userAgent.toLowerCase();
@@ -61,53 +61,95 @@ export default function AppDownloadSection() {
     }
   };
 
+  const createFirstTripButton = () => {
+    return (
+      <>
+        <Link
+          href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_start_planning&mt=8"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Download on the App Store"
+          className="relative group flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-3 rounded-2xl font-bold text-md shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-white"
+        >
+          <span>Create my first trip</span>
+          <div className="absolute inset-0 bg-primary/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
+        </Link>
+        <span className="text-xs text-muted-foreground text-center">
+          This is completely free • No credit card required
+        </span>
+      </>
+
+    )
+  }
+
+  const iosQrCode = () => {
+    return (
+      <div className="hidden md:flex flex-col items-center">
+        <Image
+          src="/assets/qr-code.png"
+          alt="QR code to download PlaPlan"
+          width={120}
+          height={120}
+          className="rounded-lg shadow-md"
+        />
+        <span className="text-xs text-muted-foreground text-center pt-2">
+          Scan to start planning on iPhone
+        </span>
+      </div>
+    )
+  }
+
+  const iosAppStoreButton = () => {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <Link
+          href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_main&mt=8"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Download on the App Store"
+        >
+          <Image
+            src="/assets/app-store-badge-black.svg"
+            alt="Download on the App Store"
+            width={160}
+            height={44}
+            className="hover:opacity-80 transition-opacity duration-300"
+          />
+        </Link>
+        <span className="text-xs text-muted-foreground text-center">
+          Create your first trip free • No credit card required
+        </span>
+      </div>
+    )
+  }
+
+  const androidWaitList = () => {
+    return (
+      <button
+        onClick={() => setShowWaitlistModal(true)}
+        className="flex items-center justify-center gap-2 px-4 py-3.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-md hover:shadow-lg"
+      >
+        <span>Get early access (Android & Web)</span>
+      </button>
+    )
+  }
+
   return (
     <>
-      <div className="pt-6 md:pt-10 lg:pt-10 xl:pt-12 pb-6 flex flex-col md:flex-col justify-center items-center gap-6">
+      <div className="pt-6 md:pt-10 lg:pt-10 xl:pt-12 pb-4 flex flex-col md:flex-col justify-center items-center gap-4">
+        {deviceType === 'ios' && createFirstTripButton()}
+
         {/* QR Code */}
-        <div className="hidden md:flex flex-col items-center">
-          <Image
-            src="/assets/qr-code.png"
-            alt="QR code to download PlaPlan"
-            width={120}
-            height={120}
-            className="rounded-lg shadow-md"
-          />
-        </div>
+        {deviceType === 'desktop' && iosQrCode()}
 
         {/* Download Buttons Row */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           {/* iOS App Store Button */}
-          <Link
-            href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_main&mt=8"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Download on the App Store"
-          >
-            <Image
-              src="/assets/app-store-badge-black.svg"
-              alt="Download on the App Store"
-              width={160}
-              height={44}
-              className="hover:opacity-80 transition-opacity duration-300"
-            />
-          </Link>
+          {/* {deviceType === 'ios' && iosAppStoreButton()} */}
 
           {/* Android Waitlist Button */}
-          <button
-            onClick={() => setShowWaitlistModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C4.8 10.79 3.5 12.94 3.5 15.44c0 .09 0 .18.01.27h17c.01-.09.01-.18.01-.27 0-2.5-1.3-4.65-2.91-5.96zM7 13.75c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z" />
-            </svg>
-            <span>Join Waitlist</span>
-          </button>
+          {(deviceType === 'desktop' || deviceType === 'android') && androidWaitList()}
         </div>
-
-        <span className="text-xs text-muted-foreground text-center">
-          Free to download • Try premium features for free
-        </span>
       </div>
 
       {/* Waitlist Modal */}
