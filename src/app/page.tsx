@@ -7,9 +7,305 @@ import { Calendar, Plane, Sparkles, Globe, Mountain, Camera } from 'lucide-react
 import ReviewsCarousel from '@/components/ReviewCarousel';
 import FAQSection from '@/components/FaqSection';
 import AppDownloadSection from '@/components/AppDownloadSection';
+import { point } from 'leaflet';
 
 const SESSION_STORAGE_FORM_INPUT_KEY = 'roamReadyFormInput';
 const SESSION_STORAGE_GENERATED_PLANS_KEY = 'roamReadyGeneratedPlansOutput';
+
+const PRICING_DATA = {
+  planGenerations: {
+    free: '3/day',
+    pro: 'Unlimited',
+    title: 'Travel Plan Generations',
+    subtitle: 'Create new itineraries',
+    points: null,
+    order: 1,
+  },
+  savedPlans: {
+    free: '2 plans',
+    pro: 'Unlimited',
+    title: 'Saved Plans',
+    subtitle: 'Store itineraries',
+    points: null,
+    order: 2,
+  },
+  aiItineraries: {
+    free: true,
+    pro: true,
+    title: 'AI-Powered Itineraries',
+    subtitle: 'Day-by-day plans with places, timing, and routes',
+    points: null,
+    order: 3,
+  },
+  interactiveMaps: {
+    free: true,
+    pro: true,
+    title: 'Interactive Maps',
+    subtitle: 'View all stops and routes in one place',
+    points: null,
+    order: 4,
+  },
+  packingLists: {
+    free: true,
+    pro: true,
+    title: 'Packing Lists',
+    subtitle: 'Basic simple packing lists for each trip',
+    points: null,
+    order: 5,
+  },
+  travelPlanCustomization: {
+    free: false,
+    pro: true,
+    title: 'Travel Plan Customization',
+    subtitle: 'Edit title, description and cover picture',
+    points: null,
+    order: 6,
+  },
+  dashboard: {
+    free: false,
+    pro: true,
+    title: 'Travel Dashboard',
+    subtitle: 'Travel insights and statistics',
+    points: [
+      'Total Travel Duration and Distance',
+      'Best Period to Visit',
+      'Location Safety Rate',
+      'Avg. Accommodation Price',
+      'Public Transport Info'
+    ],
+    order: 7,
+  },
+  locationDetails: {
+    free: false,
+    pro: true,
+    title: 'Location Details',
+    subtitle: 'Cost of visiting and time insights for each place',
+    points: null,
+    order: 8,
+  },
+  offlineAccess: {
+    free: false,
+    pro: true,
+    title: 'Offline Access',
+    subtitle: 'Access your plans without internet',
+    points: null,
+    order: 9,
+  },
+  itineraryManagement: {
+    free: false,
+    pro: true,
+    title: 'Manage Itineraries',
+    subtitle: 'Create, update and delete locations, add new days',
+    points: null,
+    order: 10,
+  },
+};
+
+const FeatureValue = ({ value, isPro }: { value: string | boolean; isPro?: boolean }) => {
+  if (typeof value === 'boolean') {
+    return value ? (
+      <svg className="w-5 h-5 lg:w-6 lg:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      </svg>
+    ) : (
+      <svg className="w-5 h-5 lg:w-6 lg:h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    );
+  }
+
+  if (value === 'Unlimited' && isPro) {
+    return (
+      <div className="inline-flex items-center gap-2 bg-primary/10 rounded-full px-3 lg:px-4 py-1">
+        <span className="text-primary font-bold text-sm lg:text-base">Unlimited</span>
+      </div>
+    );
+  }
+
+  return <span className="text-muted-foreground font-medium text-sm lg:text-base">{value}</span>;
+};
+
+export function OptimizedPricingSection() {
+  // Sort features by order
+  const sortedFeatures = Object.entries(PRICING_DATA).sort(
+    ([, a], [, b]) => a.order - b.order
+  );
+
+  return (
+    <section className="mt-20 mb-20 relative">
+      <div className="text-center mb-12">
+        <p className="text-3xl md:text-4xl text-black/80 font-semibold mb-2 max-w-3xl mx-auto leading-relaxed">
+          Pricing
+        </p>
+        <hr className="w-20 h-1 mx-auto my-2 bg-primary border-0 rounded-lg md:my-2" />
+        <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto px-4">
+          Start free and upgrade when you're ready for unlimited planning
+        </p>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Mobile View - Card Layout */}
+        <div className="md:hidden space-y-6">
+          {/* Free Plan Card */}
+          <div className="bg-white/60 backdrop-blur-sm border border-border rounded-3xl overflow-hidden shadow-lg">
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 mb-2 shadow-sm">
+                <span className="text-xl font-bold text-foreground">Free</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Get Started</p>
+            </div>
+            <div className="p-6 space-y-4">
+              {sortedFeatures.map(([key, feature]) => (
+                <div
+                  key={key}
+                  className={`flex items-center justify-between py-3 ${key !== sortedFeatures[sortedFeatures.length - 1][0] ? 'border-b border-border' : ''
+                    }`}
+                >
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">{feature.title}</p>
+                    <p className="text-xs text-muted-foreground">{feature.subtitle}</p>
+                  </div>
+                  <div className="ml-4">
+                    <FeatureValue value={feature.free} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Premium Plan Card */}
+          <div className="bg-white/60 backdrop-blur-sm border-2 border-primary rounded-3xl overflow-hidden shadow-xl relative">
+            <div className="bg-gradient-to-r from-primary/20 to-amber-500/20 p-6 text-center">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-amber-500 rounded-full px-4 py-2 mb-2 shadow-md">
+                <Sparkles className="w-4 h-4 text-white" />
+                <span className="text-xl font-bold text-white">Premium</span>
+              </div>
+              <p className="text-sm font-medium text-primary">Unlimited Planning</p>
+            </div>
+            <div className="p-6 space-y-4">
+              {sortedFeatures.map(([key, feature]) => (
+                <div
+                  key={key}
+                  className={`${key !== sortedFeatures[sortedFeatures.length - 1][0] ? 'border-b border-border' : ''
+                    }`}
+                >
+                  {feature.points ? (
+                    // Special rendering for dashboard with points
+                    <div className="space-y-3 py-3">
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold text-foreground">{feature.title}</p>
+                        <FeatureValue value={feature.pro} isPro />
+                      </div>
+                      <div className="pl-4 space-y-2 text-sm">
+                        {feature.points.map((point, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                            <p className="text-muted-foreground">{point}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    // Standard feature rendering
+                    <div className="flex items-center justify-between py-3">
+                      <div className="flex-1">
+                        <p className="font-semibold text-foreground">{feature.title}</p>
+                        <p className="text-xs text-muted-foreground">{feature.subtitle}</p>
+                      </div>
+                      <div className="ml-4">
+                        <FeatureValue value={feature.pro} isPro />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop View - Table Layout */}
+        <div className="hidden md:block bg-white/60 backdrop-blur-sm border border-border rounded-3xl overflow-hidden shadow-lg">
+          {/* Header Row */}
+          <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-primary/45 to-primary/20 border-b border-border">
+            <div className="col-span-1"></div>
+            <div className="col-span-1 text-center">
+              <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 mb-2">
+                <span className="text-lg font-bold text-foreground">Free</span>
+              </div>
+              <p className="text-sm text-foreground/80 font-medium">Get Started</p>
+            </div>
+            <div className="col-span-1 text-center relative">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 rounded-full px-4 py-2 mb-2 shadow-md">
+                <Sparkles className="w-4 h-4 text-white" />
+                <span className="text-lg font-bold text-white">Premium</span>
+              </div>
+              <p className="text-sm font-medium text-primary">Unlimited Planning</p>
+            </div>
+          </div>
+
+          {/* Feature Rows */}
+          <div className="divide-y divide-border">
+            {sortedFeatures.map(([key, feature]) => (
+              <div
+                key={key}
+                className="grid grid-cols-3 gap-4 p-6 hover:bg-primary/5 transition-colors duration-200"
+              >
+                <div className="col-span-1 flex items-center">
+                  <div>
+                    <p className="font-semibold text-foreground text-sm lg:text-base">
+                      {feature.title}
+                    </p>
+                    <p className="text-xs lg:text-sm text-muted-foreground">
+                      {feature.subtitle}
+                    </p>
+                    {feature.points && (
+                      // Special rendering for dashboard with points
+                      <div className="text-center w-full">
+                        <div className="p-4 space-y-2">
+                          {feature.points.map((point, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-left">
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                              <p className="text-xs lg:text-sm text-muted-foreground">{point}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-1 flex items-center justify-center">
+                  <FeatureValue value={feature.free} />
+                </div>
+                <div className="col-span-1 flex items-center justify-center">
+                  <FeatureValue value={feature.pro} isPro />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Row */}
+          {/* <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-t border-border">
+            <div className="col-span-1"></div>
+            <div className="col-span-1 flex items-center justify-center">
+              <span className="text-sm text-muted-foreground font-medium">Free Forever</span>
+            </div>
+            <div className="col-span-1 flex items-center justify-center">
+              <Link
+                href="https://apps.apple.com/app/apple-store/id6751006510?pt=128059857&ct=landing_download&mt=8"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-white font-bold py-3 px-6 rounded-xl text-sm shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span>Get Premium</span>
+              </Link>
+            </div>
+          </div> */}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -74,14 +370,14 @@ export default function HomePage() {
             >
               fully planned
             </span>{' '}
-            without the boring research
+            without boring research
           </p>
-          {/* CTA Section */}
-          <p className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 text-sm sm:text-lg font-semibold text-gray-600">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             From routes and maps to daily schedules and location insights. PlaPlan creates a complete, ready-to-use itinerary in minutes.
           </p>
-
         </section>
+
+        {/* CTA Section */}
         <AppDownloadSection />
 
         {/* Travel Interests Badges Section */}
@@ -200,7 +496,7 @@ export default function HomePage() {
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">AI-Powered Planning</h3>
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                  Let our intelligent AI create personalized itineraries based on your preferences and interests
+                  A full day-by-day itinerary with places, timing, and routes are generated instantly.
                 </p>
               </div>
             </div>
@@ -223,7 +519,7 @@ export default function HomePage() {
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">Interactive Maps</h3>
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                  Visualize your entire journey with interactive maps and optimized routes between destinations
+                  See every stop and route on one map, no switching between apps.
                 </p>
               </div>
             </div>
@@ -246,7 +542,7 @@ export default function HomePage() {
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground mb-2">Detailed Itineraries</h3>
                 <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                  Every day planned perfectly with timings, locations, and all the details you need for a smooth trip
+                  Know exactly where to go, when, and how long to stay.
                 </p>
               </div>
             </div>
@@ -268,6 +564,8 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Pricing Comparison Section */}
+        <OptimizedPricingSection />
 
         <section className="text-center">
           {/* Feature Grid */}
@@ -334,7 +632,7 @@ export default function HomePage() {
         </section>
         <FAQSection />
         {/* <ReviewsCarousel /> */}
-      </div>
+      </div >
 
       <style jsx>{`
         @keyframes fadeInUp {
@@ -352,6 +650,6 @@ export default function HomePage() {
           animation: fadeInUp 0.6s ease-out forwards;
         }
       `}</style>
-    </div>
+    </div >
   );
 }
